@@ -330,6 +330,7 @@ struct TExecPlanFragmentParams {
   16: optional bool is_simplified_param
   17: optional TTxnParams txn_conf
   18: optional i64 backend_id
+  19: optional map<i32, list<string>> global_dict_map
 }
 
 struct TExecPlanFragmentResult {
