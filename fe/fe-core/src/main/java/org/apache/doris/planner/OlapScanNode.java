@@ -17,18 +17,7 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.Analyzer;
-import org.apache.doris.analysis.BaseTableRef;
-import org.apache.doris.analysis.BinaryPredicate;
-import org.apache.doris.analysis.CastExpr;
-import org.apache.doris.analysis.Expr;
-import org.apache.doris.analysis.InPredicate;
-import org.apache.doris.analysis.IntLiteral;
-import org.apache.doris.analysis.PartitionNames;
-import org.apache.doris.analysis.SlotDescriptor;
-import org.apache.doris.analysis.SlotRef;
-import org.apache.doris.analysis.TupleDescriptor;
-import org.apache.doris.analysis.TupleId;
+import org.apache.doris.analysis.*;
 import org.apache.doris.catalog.Catalog;
 import org.apache.doris.catalog.ColocateTableIndex;
 import org.apache.doris.catalog.Column;
@@ -141,6 +130,8 @@ public class OlapScanNode extends ScanNode {
     private HashSet<Long> scanBackendIds = new HashSet<>();
 
     private Map<Long, Integer> tabletId2BucketSeq = Maps.newHashMap();
+
+    private Map<SlotId, Integer> slotIdToDictId = Maps.newHashMap();
     // a bucket seq may map to many tablets, and each tablet has a TScanRangeLocations.
     public ArrayListMultimap<Integer, TScanRangeLocations> bucketSeq2locations = ArrayListMultimap.create();
 
@@ -907,6 +898,10 @@ public class OlapScanNode extends ScanNode {
             conjunct.analyze(analyzer);
             conjuncts.add(conjunct);
         }
+    }
+
+    public void addDict(SlotId slotId,Integer dictId) {
+        slotIdToDictId.put(slotId, dictId);
     }
 
     /*
