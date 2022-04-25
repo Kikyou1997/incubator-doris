@@ -17,7 +17,19 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.*;
+import org.apache.doris.analysis.Analyzer;
+import org.apache.doris.analysis.BaseTableRef;
+import org.apache.doris.analysis.BinaryPredicate;
+import org.apache.doris.analysis.CastExpr;
+import org.apache.doris.analysis.Expr;
+import org.apache.doris.analysis.InPredicate;
+import org.apache.doris.analysis.IntLiteral;
+import org.apache.doris.analysis.PartitionNames;
+import org.apache.doris.analysis.SlotDescriptor;
+import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleDescriptor;
+import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.Catalog;
 import org.apache.doris.catalog.ColocateTableIndex;
 import org.apache.doris.catalog.Column;
@@ -72,6 +84,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 // Full scan of an Olap table.
@@ -733,7 +746,12 @@ public class OlapScanNode extends ScanNode {
         output.append(prefix).append(String.format(
                 "numNodes=%s", numNodes));
         output.append("\n");
-
+        StringJoiner dictColumnInfo = new StringJoiner(", ", "Dict col: ", "");
+        for (Map.Entry<SlotId, Integer> entry : slotIdToDictId.entrySet()) {
+            dictColumnInfo.add(String.format("<%s, %s>", entry.getKey().asInt(), entry.getValue()));
+        }
+        output.append(prefix).append(dictColumnInfo.toString());
+        output.append("\n");
         return output.toString();
     }
 

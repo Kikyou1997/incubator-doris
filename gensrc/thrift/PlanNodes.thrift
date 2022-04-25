@@ -52,6 +52,7 @@ enum TPlanNodeType {
   EXCEPT_NODE,
   ODBC_SCAN_NODE,
   TABLE_FUNCTION_NODE,
+  DECODE_NODE
 }
 
 // phases of an execution node
@@ -348,6 +349,11 @@ struct TOlapScanNode {
   5: optional string sort_column
   6: optional Types.TKeysType keyType
   7: optional string table_name
+  8: optional map<Types.TSlotId,i32> slot_to_dict
+}
+
+struct TDecodeNode {
+    1: required map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TEqJoinCondition {
@@ -789,6 +795,7 @@ struct TPlanNode {
   35: optional TOdbcScanNode odbc_scan_node
   // Runtime filters assigned to this plan node, exist in HashJoinNode and ScanNode
   36: optional list<TRuntimeFilterDesc> runtime_filters
+  37: optional TDecodeNode decode_node
 
   // Use in vec exec engine
   40: optional Exprs.TExpr vconjunct

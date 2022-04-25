@@ -17,15 +17,28 @@
 
 package org.apache.doris.statistics;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public interface IDictManager {
 
-    ColumnDict getDict(long tableId);
+    ColumnDict getColumnDict(long tableId, String columnName);
+
+    Map<Integer, List<String>> getAllDict();
 
     static IDictManager getInstance() {
         return new IDictManager() {
             @Override
-            public ColumnDict getDict(long tableId) {
+            public ColumnDict getColumnDict(long tableId, String colName) {
                 return new ColumnDict();
+            }
+
+            @Override
+            public Map<Integer, List<String>> getAllDict() {
+                Map<Integer, List<String>> tempMap = new HashMap<>();
+                tempMap.put(0, new ColumnDict().getDict());
+                return tempMap;
             }
         };
     }

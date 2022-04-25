@@ -232,6 +232,8 @@ public class DistributedPlanner {
             result = createRepeatNodeFragment((RepeatNode) root, childFragments.get(0), fragments);
         } else if (root instanceof AssertNumRowsNode) {
             result = createAssertFragment(root, childFragments.get(0));
+        } else if (root instanceof DecodeNode) {
+            result = createDecodeNodeFragment((DecodeNode) root, childFragments);
         } else {
             throw new UserException(
                     "Cannot create plan fragment for this node type: " + root.getExplainString());
@@ -850,6 +852,15 @@ public class DistributedPlanner {
         // (whereas selectNode.child[0] would point to the original child)
         selectNode.setChild(0, childFragment.getPlanRoot());
         childFragment.setPlanRoot(selectNode);
+        return childFragment;
+    }
+
+    private PlanFragment createDecodeNodeFragment(DecodeNode decodeNode, ArrayList<PlanFragment> childFragments) {
+        PlanFragment childFragment = childFragments.get(0);
+        // set the child explicitly, an ExchangeNode might have been inserted
+        // (whereas selectNode.child[0] would point to the original child)
+        decodeNode.setChild(0, childFragment.getPlanRoot());
+        childFragment.setPlanRoot(decodeNode);
         return childFragment;
     }
 

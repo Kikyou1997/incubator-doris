@@ -17,13 +17,29 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.*;
+
+import org.apache.doris.analysis.AggregateInfo;
+import org.apache.doris.analysis.Analyzer;
+import org.apache.doris.analysis.BinaryPredicate;
+import org.apache.doris.analysis.Expr;
+import org.apache.doris.analysis.FunctionCallExpr;
+import org.apache.doris.analysis.FunctionParams;
+import org.apache.doris.analysis.SlotDescriptor;
+import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.statistics.ColumnDict;
 
 import org.apache.doris.statistics.IDictManager;
 
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DictPlanner {
@@ -159,11 +175,11 @@ public class DictPlanner {
 
     private int tryToGetColumnDict(long tableId, String columnName) {
         IDictManager dictManager = IDictManager.getInstance();
-        ColumnDict dict = dictManager.getDict(tableId);
+        ColumnDict dict = dictManager.getColumnDict(tableId, columnName);
         if (dict == null) {
             return -1;
         }
-        return dict.getDict(columnName);
+        return dict.getDictId();
     }
 
     private static class DictContext {

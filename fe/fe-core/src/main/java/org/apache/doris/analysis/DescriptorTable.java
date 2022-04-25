@@ -100,6 +100,14 @@ public class DescriptorTable {
         return result;
     }
 
+    public SlotId generateNextSlotId() {
+        return slotIdGenerator_.getNextId();
+    }
+
+    public TupleId generateNextTupleId() {
+        return tupleIdGenerator_.getNextId();
+    }
+
     public TupleDescriptor getTupleDesc(TupleId id) {
         return tupleDescs.get(id);
     }

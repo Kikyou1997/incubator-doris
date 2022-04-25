@@ -33,12 +33,14 @@ import org.apache.doris.analysis.StorageBackend;
 import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.catalog.PrimitiveType;
 import org.apache.doris.catalog.ScalarType;
+import org.apache.doris.catalog.Type;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.profile.PlanTreeBuilder;
 import org.apache.doris.common.profile.PlanTreePrinter;
 import org.apache.doris.common.util.VectorizedUtil;
 import org.apache.doris.qe.ConnectContext;
 import org.apache.doris.rewrite.mvrewrite.MVSelectFailedException;
+import org.apache.doris.statistics.IDictManager;
 import org.apache.doris.thrift.TExplainLevel;
 import org.apache.doris.thrift.TQueryOptions;
 import org.apache.doris.thrift.TRuntimeFilterMode;
@@ -170,7 +172,41 @@ public class Planner {
         plannerContext = new PlannerContext(analyzer, queryStmt, queryOptions, statement);
         singleNodePlanner = new SingleNodePlanner(plannerContext);
         PlanNode singleNodePlan = singleNodePlanner.createSingleNodePlan();
+        //  test this sql only: select count(*) , l_shipmode from lineitem group by l_shipmode
+        if (analyzer.getContext().getSessionVariable().isGlobalDictTest()){
+            AggregationNode aggNode = (AggregationNode) singleNodePlan;
+            OlapScanNode scanNode = (OlapScanNode) aggNode.getChild(0);
+            DecodeNode decodeNode = new DecodeNode(
+                singleNodePlanner.getPlannerContext().getNextNodeId(),
+                aggNode,
+                "DECODENODE",
+                analyzer);
+            singleNodePlan = decodeNode;
+            TupleDescriptor tupleDesc = scanNode.getTupleDesc();
+            List<SlotDescriptor> slotDescList = tupleDesc.getSlots();
+            String aggKey = "l_shipmode";
+            for (SlotDescriptor slotDesc : slotDescList) {
+                if (slotDesc.getColumn().getName().equals(aggKey)) {
+                    TupleDescriptor newTupleDesc = analyzer.copyTupleDescriptor(slotDesc.getParent().getId());
+                    slotDesc.setType(Type.INT);
+                    SlotId slotId = slotDesc.getId();
+                    int dictId = IDictManager.getInstance().getColumnDict(0, "").getDictId();
+                    scanNode.addDict(slotId, dictId);
+                    decodeNode.tupleIds = new ArrayList<>();
+                    SlotId newSlotId = newTupleDesc
+                        .getSlots()
+                        .stream()
+                        .filter(x -> x.getColumn().getName().equals(aggKey))
+                        .map(x -> x.getId())
+                        .findFirst()
+                        .get();
+                    decodeNode.tupleIds.add(newTupleDesc.getId());
+                    decodeNode.addDecodingNeededSlots(newSlotId, dictId);
+                    break;
+                }
+            }
 
+        }
         if (VectorizedUtil.isVectorized()) {
             singleNodePlan.convertToVectoriezd();
         }

@@ -17,9 +17,31 @@
 
 package org.apache.doris.statistics;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class ColumnDict {
 
-    public int getDict(String col) {
+    private List<String> dict = new ArrayList<>();
+
+    {
+        dict.add("RAIL");
+        dict.add("FOB");
+        dict.add("MAIL");
+        dict.add("SHIP");
+        dict.add("TRUCK");
+        dict.add("REG AIR");
+        dict.add("AIR");
+        Collections.sort(dict);
+    }
+    private int id;
+
+    public int getDictId() {
         return 0;
+    }
+
+    public List<String> getDict() {
+        return this.dict;
     }
 }

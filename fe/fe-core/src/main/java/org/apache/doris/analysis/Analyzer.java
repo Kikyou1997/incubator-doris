@@ -2224,4 +2224,16 @@ public class Analyzer {
         }
         return false;
     }
+
+    public SlotId getNextSlotId() {
+        return globalState.descTbl.generateNextSlotId();
+    }
+
+    public TupleId getNextTupleId() {
+        return globalState.descTbl.generateNextTupleId();
+    }
+
+    public TupleDescriptor copyTupleDescriptor(TupleId tupleId) {
+        return globalState.descTbl.copyTupleDescriptor(tupleId, "");
+    }
 }
