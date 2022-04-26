@@ -30,7 +30,7 @@ import java.util.UUID;
 
 public class DictCaseTest {
 
-    private static String runningDir = "/Users/liujichang/Documents/incubator-doris/fe/fe-core/target/classes/cup/org/apache/doris/analysis";
+    private static String runningDir = "fe/mocked/DemoTest/" + UUID.randomUUID().toString() + "/";
     private static ConnectContext ctx;
 
     @BeforeClass
