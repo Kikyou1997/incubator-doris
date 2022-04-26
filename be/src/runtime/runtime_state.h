@@ -39,6 +39,7 @@
 #include "runtime/thread_resource_mgr.h"
 #include "util/logging.h"
 #include "util/runtime_profile.h"
+#include "vec/runtime/dict/global_dict.h"
 
 namespace doris {
 
@@ -363,6 +364,9 @@ public:
 
     QueryFragmentsCtx* get_query_fragments_ctx() { return _query_ctx; }
 
+    void set_global_dicts(const std::map<int, std::vector<std::string>>& data);
+
+    vectorized::GlobalDictSPtr get_global_dict(int dict_id);
 private:
     // Use a custom block manager for the query for testing purposes.
     void set_block_mgr2(const std::shared_ptr<BufferedBlockMgr2>& block_mgr) {
@@ -513,6 +517,10 @@ private:
 
     // prohibit copies
     RuntimeState(const RuntimeState&);
+
+    //global dict
+    std::map<int, vectorized::GlobalDictSPtr> _global_dict_map; 
+
 };
 
 #define RETURN_IF_CANCELLED(state)                                                    \

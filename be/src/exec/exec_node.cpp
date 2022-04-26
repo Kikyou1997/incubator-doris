@@ -82,6 +82,8 @@
 #include "vec/exec/vsort_node.h"
 #include "vec/exec/vtable_function_node.h"
 #include "vec/exec/vunion_node.h"
+#include "vec/exec/meta_scan_node.h"
+#include "vec/exec/decode_node.h"
 #include "vec/exprs/vexpr.h"
 
 namespace doris {
@@ -581,7 +583,12 @@ Status ExecNode::create_node(RuntimeState* state, ObjectPool* pool, const TPlanN
             *node = pool->add(new TableFunctionNode(pool, tnode, descs));
         }
         return Status::OK();
-
+    case TPlanNodeType::META_SCAN_NODE:
+        *node = pool->add(new vectorized::MetaScanNode(pool, tnode, descs));
+        return Status::OK();
+    case TPlanNodeType::DECODE_NODE:
+        *node = pool->add(new vectorized::DecodeNode(pool, tnode, descs));
+        return Status::OK();
     default:
         map<int, const char*>::const_iterator i =
                 _TPlanNodeType_VALUES_TO_NAMES.find(tnode.node_type);

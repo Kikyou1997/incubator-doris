@@ -52,6 +52,7 @@ enum TPlanNodeType {
   EXCEPT_NODE,
   ODBC_SCAN_NODE,
   TABLE_FUNCTION_NODE,
+  DECODE_NODE,
 }
 
 // phases of an execution node
@@ -334,10 +335,17 @@ struct TSchemaScanNode {
 
 struct TMetaScanNode {
   1: required Types.TTupleId tuple_id
-  2: required string table_name
-  3: optional string db
-  4: optional string table
-  5: optional string user
+  2: required list<string> key_column_name
+  3: required list<Types.TPrimitiveType> key_column_type
+  4: required bool is_preaggregation
+  5: optional string sort_column
+  6: optional Types.TKeysType keyType
+  7: optional string table_name
+  8: optional map<Types.TSlotId,i32> slot_to_dict
+}
+
+struct TDecodeNode {
+    1: required map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TOlapScanNode {
@@ -348,6 +356,7 @@ struct TOlapScanNode {
   5: optional string sort_column
   6: optional Types.TKeysType keyType
   7: optional string table_name
+  8: optional map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TEqJoinCondition {
@@ -797,6 +806,9 @@ struct TPlanNode {
 
   // output column
   42: optional list<Types.TSlotId> output_slot_ids
+
+  // decode dict
+  43: optional TDecodeNode decode_node
 }
 
 // A flattened representation of a tree of PlanNodes, obtained by depth-first

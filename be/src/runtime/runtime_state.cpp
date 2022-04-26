@@ -462,4 +462,14 @@ int64_t RuntimeState::get_load_mem_limit() {
     }
 }
 
+void RuntimeState::set_global_dicts(const std::map<int, std::vector<std::string>>& data){
+    for(auto it = data.begin(); it!= data.end(); it++){
+        _global_dict_map[it->first] = std::make_shared<vectorized::GlobalDict>(it->second);
+    }
+}
+
+vectorized::GlobalDictSPtr RuntimeState::get_global_dict(int dict_id){
+    assert(_global_dict_map.find(dict_id) != _global_dict_map.end());
+    return _global_dict_map[dict_id];
+}
 } // end namespace doris

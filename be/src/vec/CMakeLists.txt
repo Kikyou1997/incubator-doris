@@ -100,6 +100,8 @@ set(VEC_FILES
   exec/vrepeat_node.cpp
   exec/vtable_function_node.cpp
   exec/join/vhash_join_node.cpp
+  exec/meta_scan_node.cpp
+  exec/decode_node.cpp
   exprs/vectorized_agg_fn.cpp
   exprs/vectorized_fn_call.cpp
   exprs/vexpr.cpp
@@ -187,7 +189,8 @@ set(VEC_FILES
   runtime/vdata_stream_recvr.cpp
   runtime/vdata_stream_mgr.cpp
   runtime/vpartition_info.cpp
-  runtime/vsorted_run_merger.cpp)
+  runtime/vsorted_run_merger.cpp
+  )
 
 add_library(Vec STATIC
     ${VEC_FILES}
