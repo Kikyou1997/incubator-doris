@@ -341,10 +341,12 @@ struct TMetaScanNode {
   5: optional string sort_column
   6: optional Types.TKeysType keyType
   7: optional string table_name
-  8: optional map<Types.TSlotId,i32> slot_to_dict
+  //slot_id to global_dict_id
+  8: required map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TDecodeNode {
+    //slot_id to global_dict_id
     1: required map<Types.TSlotId,i32> slot_to_dict
 }
 
@@ -356,6 +358,7 @@ struct TOlapScanNode {
   5: optional string sort_column
   6: optional Types.TKeysType keyType
   7: optional string table_name
+  //slot_id to global_dict_id
   8: optional map<Types.TSlotId,i32> slot_to_dict
 }
 
