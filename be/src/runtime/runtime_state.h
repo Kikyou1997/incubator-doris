@@ -364,7 +364,7 @@ public:
 
     QueryFragmentsCtx* get_query_fragments_ctx() { return _query_ctx; }
 
-    void set_global_dicts(const std::map<int, std::vector<std::string>>& data);
+    void set_global_dicts(TGlobalDict tglobal_dict);
 
     vectorized::GlobalDictSPtr get_global_dict(int dict_id);
 private:

@@ -19,7 +19,12 @@
 namespace doris::vectorized {
 
     DecodeNode::DecodeNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs)
-    :ExecNode(pool, tnode, descs){
+    :ExecNode(pool, tnode, descs),
+        _tuple_id(tnode.decode_node.tuple_id),
+        _decode_node(tnode.decode_node),
+        _tuple_desc(nullptr),
+        _slot_to_dict(tnode.meta_scan_node.slot_to_dict)
+    {
         //TODO
     }
     

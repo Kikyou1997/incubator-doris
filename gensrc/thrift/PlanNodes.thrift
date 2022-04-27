@@ -347,7 +347,8 @@ struct TMetaScanNode {
 
 struct TDecodeNode {
     //slot_id to global_dict_id
-    1: required map<Types.TSlotId,i32> slot_to_dict
+    1: required Types.TTupleId tuple_id
+    2: required map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TOlapScanNode {

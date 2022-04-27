@@ -1,3 +1,4 @@
+
 // Licensed to the Apache Software Foundation (ASF) under one
 // or more contributor license agreements.  See the NOTICE file
 // distributed with this work for additional information
@@ -30,6 +31,10 @@ public:
     Status get_next(RuntimeState* state, Block* block, bool* eos) override;
     
 private:
+    TupleId _tuple_id;
+    TMetaScanNode _meta_scan_node;
+    const TupleDescriptor* _tuple_desc;
+    std::map<int, int> _slot_to_dict;
         
 };
 } // namespace vectorized

@@ -34,7 +34,10 @@ public:
     Status get_next(RuntimeState* state, Block* block, bool* eos) override;
     
 private:
-        
+    TupleId _tuple_id;
+    TDecodeNode _decode_node;
+    const TupleDescriptor* _tuple_desc;
+    std::map<int, int> _slot_to_dict;   
 };
 } // namespace vectorized
 } // namespace doris

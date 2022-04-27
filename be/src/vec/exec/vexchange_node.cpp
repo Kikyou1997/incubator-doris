@@ -67,12 +67,14 @@ Status VExchangeNode::open(RuntimeState* state) {
     SCOPED_TIMER(_runtime_profile->total_time_counter());
     SCOPED_SWITCH_TASK_THREAD_LOCAL_MEM_TRACKER(mem_tracker());
     RETURN_IF_ERROR(ExecNode::open(state));
-
+    
     if (_is_merging) {
         RETURN_IF_ERROR(_vsort_exec_exprs.open(state));
         RETURN_IF_ERROR(_stream_recvr->create_merger(_vsort_exec_exprs.lhs_ordering_expr_ctxs(),
                                                      _is_asc_order, _nulls_first,
                                                      state->batch_size(), _limit, _offset));
+    }else{
+        ADD_THREAD_LOCAL_MEM_TRACKER(_stream_recvr->mem_tracker());
     }
 
     return Status::OK();
@@ -84,7 +86,7 @@ Status VExchangeNode::get_next(RuntimeState* state, RowBatch* row_batch, bool* e
 Status VExchangeNode::get_next(RuntimeState* state, Block* block, bool* eos) {
     SCOPED_TIMER(runtime_profile()->total_time_counter());
     SCOPED_SWITCH_TASK_THREAD_LOCAL_EXISTED_MEM_TRACKER(mem_tracker());
-    ADD_THREAD_LOCAL_MEM_TRACKER(_stream_recvr->mem_tracker());
+    // 
     auto status = _stream_recvr->get_next(block, eos);
     if (block != nullptr) {
         if (_num_rows_returned + block->rows() < _limit) {

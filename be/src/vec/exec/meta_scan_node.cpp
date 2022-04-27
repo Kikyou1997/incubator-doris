@@ -19,7 +19,12 @@
 namespace doris::vectorized {
 
     MetaScanNode::MetaScanNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs)
-    :ExecNode(pool, tnode, descs){
+        :ExecNode(pool, tnode, descs),
+        _tuple_id(tnode.meta_scan_node.tuple_id),
+        _meta_scan_node(tnode.meta_scan_node),
+        _tuple_desc(nullptr),
+        _slot_to_dict(tnode.meta_scan_node.slot_to_dict)
+    {
         //TODO
     }
     

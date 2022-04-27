@@ -174,8 +174,8 @@ Status PlanFragmentExecutor::prepare(const TExecPlanFragmentParams& request,
     _runtime_state->set_num_per_fragment_instances(params.num_senders);
 
     // set up global dict
-    if (request.__isset.global_dict_map) {
-        _runtime_state->set_global_dicts(request.global_dict_map);
+    if (request.__isset.global_dict) {
+        _runtime_state->set_global_dicts(request.global_dict);
     }
     // set up sink, if required
     if (request.fragment.__isset.output_sink) {
