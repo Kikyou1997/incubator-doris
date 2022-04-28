@@ -341,7 +341,6 @@ struct TExecPlanFragmentParams {
   17: optional TTxnParams txn_conf
   18: optional i64 backend_id
   19: optional TGlobalDict global_dict  // scan node could use the global dict to encode the string value to an integer
-
 }
 
 struct TExecPlanFragmentResult {
