@@ -63,11 +63,14 @@ public:
             instance.register_data_type("Date", std::make_shared<DataTypeDate>());
             instance.register_data_type("DateTime", std::make_shared<DataTypeDateTime>());
             instance.register_data_type("String", std::make_shared<DataTypeString>());
-            instance.register_data_type("Decimal",
-                                      std::make_shared<DataTypeDecimal<Decimal128>>(27, 9));
-            instance.register_data_type("DictEncodedStringUInt8", std::make_shared<DataTypeDictEncodedStringUInt8>());
-            instance.register_data_type("DictEncodedStringUInt16", std::make_shared<DataTypeDictEncodedStringUInt16>());
-            instance.register_data_type("DictEncodedStringUInt32", std::make_shared<DataTypeDictEncodedStringUInt32>());
+            instance.register_data_type("Decimal", 
+                                        std::make_shared<DataTypeDecimal<Decimal128>>(27, 9));
+            instance.register_data_type("DictEncodedStringUInt8", 
+                                        std::make_shared<DataTypeDictEncodedStringUInt8>());
+            instance.register_data_type("DictEncodedStringUInt16", 
+                                        std::make_shared<DataTypeDictEncodedStringUInt16>());
+            instance.register_data_type("DictEncodedStringUInt32", 
+                                        std::make_shared<DataTypeDictEncodedStringUInt32>());
         });
         return instance;
     }
