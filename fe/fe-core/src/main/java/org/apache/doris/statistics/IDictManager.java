@@ -19,12 +19,12 @@ package org.apache.doris.statistics;
 
 public interface IDictManager {
 
-    ColumnDict getDict(long tableId);
+    ColumnDict getDict(long tableId, String colName);
 
     static IDictManager getInstance() {
         return new IDictManager() {
             @Override
-            public ColumnDict getDict(long tableId) {
+            public ColumnDict getDict(long tableId, String colName) {
                 return new ColumnDict();
             }
         };

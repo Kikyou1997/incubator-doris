@@ -74,6 +74,14 @@ public class PlannerTest {
                 + "DUPLICATE KEY(k1, k2, k3) distributed by hash(k1) buckets 1 properties ('replication_num' = '1');";
         createTableStmt = (CreateTableStmt) UtFrameUtils.parseAndAnalyzeStmt(createTblStmtStr, ctx);
         Catalog.getCurrentCatalog().createTable(createTableStmt);
+        createTblStmtStr = "CREATE TABLE db1.dict_test (col1 varchar, col2 varchar, col3 int)\n" +
+            "DISTRIBUTED BY HASH(k1)\n" +
+            "BUCKETS 3\n" +
+            "PROPERTIES(\n" +
+            "    \"replication_num\"=\"1\"\n" +
+            ");";
+        createTableStmt = (CreateTableStmt) UtFrameUtils.parseAndAnalyzeStmt(createTblStmtStr, ctx);
+        Catalog.getCurrentCatalog().createTable(createTableStmt);
     }
 
     @Test
@@ -447,6 +455,13 @@ public class PlannerTest {
         expectedEx.expect(AnalysisException.class);
         expectedEx.expectMessage("String Type should not be used in key column[k1].");
         UtFrameUtils.parseAndAnalyzeStmt(createTbl1, ctx);
+    }
+
+    @Test
+    public void testDictPlan() throws Exception {
+        String testSql1 = "SELECT count(col3) FROM db1.dict_test GROUP BY ";
+        String plan = UtFrameUtils.getSQLPlanOrErrorMsg(ctx, testSql1);
+        Assert.assertTrue(plan.contains(""));
     }
 
 }

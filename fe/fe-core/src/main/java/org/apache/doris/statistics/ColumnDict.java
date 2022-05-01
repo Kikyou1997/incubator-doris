@@ -17,9 +17,17 @@
 
 package org.apache.doris.statistics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ColumnDict {
 
-    public int getDict(String col) {
+    public List<String> getDict(String col) {
+        return new ArrayList<>();
+    }
+
+    public int getId() {
         return 0;
     }
+
 }

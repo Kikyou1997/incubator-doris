@@ -84,6 +84,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 // Full scan of an Olap table.
@@ -143,7 +144,7 @@ public class OlapScanNode extends ScanNode {
 
     private Map<Long, Integer> tabletId2BucketSeq = Maps.newHashMap();
 
-    private Map<SlotId, Integer> slotIdToDictId = Maps.newHashMap();
+    private List<Integer> dictAppliedSlot = new ArrayList<>();
     // a bucket seq may map to many tablets, and each tablet has a TScanRangeLocations.
     public ArrayListMultimap<Integer, TScanRangeLocations> bucketSeq2locations = ArrayListMultimap.create();
 
@@ -745,7 +746,12 @@ public class OlapScanNode extends ScanNode {
         output.append(prefix).append(String.format(
                 "numNodes=%s", numNodes));
         output.append("\n");
-
+        StringJoiner dictColumnInfo = new StringJoiner(", ", "Dict col: ", "");
+        for (Map.Entry<SlotId, Integer> entry : slotIdToDictId.entrySet()) {
+            dictColumnInfo.add(String.format("<%s, %s>", entry.getKey().asInt(), entry.getValue()));
+        }
+        output.append(prefix).append(dictColumnInfo.toString());
+        output.append("\n");
         return output.toString();
     }
 
@@ -912,8 +918,8 @@ public class OlapScanNode extends ScanNode {
         }
     }
 
-    public void addDict(SlotId slotId, Integer dictId) {
-        slotIdToDictId.put(slotId, dictId);
+    public void addDictAppliedSlot(SlotId slotId) {
+        dictAppliedSlot.add(slotId.asInt());
     }
 
     /*

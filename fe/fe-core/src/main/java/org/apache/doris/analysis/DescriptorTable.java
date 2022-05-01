@@ -22,6 +22,8 @@ package org.apache.doris.analysis;
 
 import org.apache.doris.catalog.Table;
 import org.apache.doris.common.IdGenerator;
+import org.apache.doris.statistics.ColumnDict;
+import org.apache.doris.statistics.IDictManager;
 import org.apache.doris.thrift.TDescriptorTable;
 
 import com.google.common.collect.Maps;
@@ -35,6 +37,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Repository for tuple (and slot) descriptors.
@@ -51,6 +55,7 @@ public class DescriptorTable {
     private final IdGenerator<TupleId> tupleIdGenerator_ = TupleId.createGenerator();
     private final IdGenerator<SlotId> slotIdGenerator_ = SlotId.createGenerator();
     private final HashMap<SlotId, SlotDescriptor> slotDescs = Maps.newHashMap();
+    private final Map<Integer, ColumnDict> slotIdToColumnDict = Maps.newHashMap();
 
     public DescriptorTable() {
     }
@@ -193,5 +198,13 @@ public class DescriptorTable {
             out.append(desc.getExplainString() + "\n");
         }
         return out.toString();
+    }
+
+    public void putDict(int slotId, ColumnDict dict) {
+        this.slotIdToColumnDict.put(slotId, dict);
+    }
+
+    public Map<Integer, ColumnDict> getSlotIdToColumnDict() {
+        return slotIdToColumnDict;
     }
 }
