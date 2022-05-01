@@ -60,8 +60,6 @@ public class DictPlanner {
                 removeUnavailableDictByPlanNode(aggNode, child);
             }
         }
-
-
     }
 
     private void getAllPotentialAvailableDict(PlanNode parent, PlanNode child) {

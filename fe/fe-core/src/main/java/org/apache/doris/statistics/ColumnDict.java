@@ -24,7 +24,7 @@ import java.util.List;
 
 public class ColumnDict {
 
-    public List<String> getDict(String col) {
+    public List<String> getDict() {
         return new ArrayList<>();
     }
 

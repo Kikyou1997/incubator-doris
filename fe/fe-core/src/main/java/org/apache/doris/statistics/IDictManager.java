@@ -17,6 +17,9 @@
 
 package org.apache.doris.statistics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public interface IDictManager {
 
     ColumnDict getDict(long tableId, String colName);
@@ -25,7 +28,25 @@ public interface IDictManager {
         return new IDictManager() {
             @Override
             public ColumnDict getDict(long tableId, String colName) {
-                return new ColumnDict();
+                switch (colName) {
+                    case "col1":
+                        return new ColumnDict() {
+                            public List<String> getDict() {
+                                List<String> l = new ArrayList<>();
+                                l.add("test col1");
+                                return l;
+                            }
+                        };
+                    case "col2":
+                        return new ColumnDict() {
+                            public List<String> getDict() {
+                                List<String> l = new ArrayList<>();
+                                l.add("test col2");
+                                return l;
+                            }
+                        };
+                }
+                return null;
             }
         };
     }
