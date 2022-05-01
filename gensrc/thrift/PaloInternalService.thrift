@@ -49,7 +49,7 @@ enum TErrorHubType {
     MYSQL,
     BROKER,
     NULL_TYPE
-}/root/incubator-doris-DORIS/gensrc/thrift/../build/
+}
 
 enum TPrefetchMode {
     NONE,
@@ -274,14 +274,6 @@ struct TTxnParams {
   10: optional double max_filter_ratio
 }
 
-struct TColumnDict {
-  1: optional Types.TPrimitiveType type
-  2: optional list<string> str_dict  // map one string to a integer, using offset as id
-}
-
-struct TGlobalDict {
-  1: optional map<i32, TColumnDict> dicts  // map dict_id to column dict
-}
 
 // ExecPlanFragment
 

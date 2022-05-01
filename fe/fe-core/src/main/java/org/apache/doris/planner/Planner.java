@@ -170,7 +170,7 @@ public class Planner {
         plannerContext = new PlannerContext(analyzer, queryStmt, queryOptions, statement);
         singleNodePlanner = new SingleNodePlanner(plannerContext);
         PlanNode singleNodePlan = singleNodePlanner.createSingleNodePlan();
-        DictPlanner dictPlanner = new DictPlanner();
+        DictPlanner dictPlanner = new DictPlanner(analyzer);
         dictPlanner.assignDict(singleNodePlan);
         if (VectorizedUtil.isVectorized()) {
             singleNodePlan.convertToVectoriezd();

@@ -23,12 +23,13 @@ package org.apache.doris.analysis;
 import org.apache.doris.catalog.Table;
 import org.apache.doris.common.IdGenerator;
 import org.apache.doris.statistics.ColumnDict;
-import org.apache.doris.statistics.IDictManager;
+import org.apache.doris.thrift.TColumnDict;
 import org.apache.doris.thrift.TDescriptorTable;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import org.apache.doris.thrift.TGlobalDict;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,7 +39,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Repository for tuple (and slot) descriptors.
@@ -172,6 +172,13 @@ public class DescriptorTable {
         for (Table tbl : referencedTbls) {
             result.addToTableDescriptors(tbl.toThrift());
         }
+        TGlobalDict tGlobalDict = new TGlobalDict();
+        Map<Integer, TColumnDict> thriftMap = new HashMap<>();
+        for (Map.Entry<Integer, ColumnDict> entry : slotIdToColumnDict.entrySet()) {
+            thriftMap.put(entry.getKey(), entry.getValue().toThrift());
+        }
+        tGlobalDict.dicts = thriftMap;
+        result.globalDict = tGlobalDict;
         return result;
     }
 

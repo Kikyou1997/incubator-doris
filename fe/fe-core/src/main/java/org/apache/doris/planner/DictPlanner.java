@@ -52,9 +52,6 @@ public class DictPlanner {
         this.analyzer = analyzer;
     }
 
-    public DictPlanner() {
-    }
-
     public void assignDict(PlanNode root) {
         getAllPotentialAvailableDict(null, root);
         Set<AggregationNode> aggNodeSet = dictContext.aggNodeToSlotList.keySet();
@@ -64,14 +61,6 @@ public class DictPlanner {
             }
         }
 
-
-    }
-
-    private void updateTuples(PlanNode root) {
-
-    }
-
-    private void insertDecodeNode() {
 
     }
 

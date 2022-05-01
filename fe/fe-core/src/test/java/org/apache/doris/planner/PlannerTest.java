@@ -75,7 +75,7 @@ public class PlannerTest {
         createTableStmt = (CreateTableStmt) UtFrameUtils.parseAndAnalyzeStmt(createTblStmtStr, ctx);
         Catalog.getCurrentCatalog().createTable(createTableStmt);
         createTblStmtStr = "CREATE TABLE db1.dict_test (col1 varchar, col2 varchar, col3 int)\n" +
-            "DISTRIBUTED BY HASH(k1)\n" +
+            "DISTRIBUTED BY HASH(col3)\n" +
             "BUCKETS 3\n" +
             "PROPERTIES(\n" +
             "    \"replication_num\"=\"1\"\n" +
@@ -459,9 +459,9 @@ public class PlannerTest {
 
     @Test
     public void testDictPlan() throws Exception {
-        String testSql1 = "SELECT count(col3) FROM db1.dict_test GROUP BY ";
+        String testSql1 = "SELECT count(col3) FROM db1.dict_test GROUP BY col1, col2";
         String plan = UtFrameUtils.getSQLPlanOrErrorMsg(ctx, testSql1);
-        Assert.assertTrue(plan.contains(""));
+        Assert.assertTrue(plan.contains("Dic col"));
     }
 
 }

@@ -144,7 +144,7 @@ public class OlapScanNode extends ScanNode {
 
     private Map<Long, Integer> tabletId2BucketSeq = Maps.newHashMap();
 
-    private List<Integer> dictAppliedSlot = new ArrayList<>();
+    private List<Integer> dictAppliedSlotList = new ArrayList<>();
     // a bucket seq may map to many tablets, and each tablet has a TScanRangeLocations.
     public ArrayListMultimap<Integer, TScanRangeLocations> bucketSeq2locations = ArrayListMultimap.create();
 
@@ -746,9 +746,9 @@ public class OlapScanNode extends ScanNode {
         output.append(prefix).append(String.format(
                 "numNodes=%s", numNodes));
         output.append("\n");
-        StringJoiner dictColumnInfo = new StringJoiner(", ", "Dict col: ", "");
-        for (Map.Entry<SlotId, Integer> entry : slotIdToDictId.entrySet()) {
-            dictColumnInfo.add(String.format("<%s, %s>", entry.getKey().asInt(), entry.getValue()));
+        StringJoiner dictColumnInfo = new StringJoiner(", ", "Dict slot: ", "");
+        for (Integer slotId : dictAppliedSlotList) {
+            dictColumnInfo.add(slotId.toString());
         }
         output.append(prefix).append(dictColumnInfo.toString());
         output.append("\n");
@@ -919,7 +919,7 @@ public class OlapScanNode extends ScanNode {
     }
 
     public void addDictAppliedSlot(SlotId slotId) {
-        dictAppliedSlot.add(slotId.asInt());
+        dictAppliedSlotList.add(slotId.asInt());
     }
 
     /*

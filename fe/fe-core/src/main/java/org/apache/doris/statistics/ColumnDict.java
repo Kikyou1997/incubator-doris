@@ -17,6 +17,8 @@
 
 package org.apache.doris.statistics;
 
+import org.apache.doris.thrift.TColumnDict;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +30,10 @@ public class ColumnDict {
 
     public int getId() {
         return 0;
+    }
+
+    public TColumnDict toThrift() {
+        return new TColumnDict();
     }
 
 }
