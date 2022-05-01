@@ -17,13 +17,27 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.*;
+import org.apache.doris.analysis.AggregateInfo;
+import org.apache.doris.analysis.Analyzer;
+import org.apache.doris.analysis.BinaryPredicate;
+import org.apache.doris.analysis.Expr;
+import org.apache.doris.analysis.FunctionCallExpr;
+import org.apache.doris.analysis.FunctionParams;
+import org.apache.doris.analysis.LiteralExpr;
+import org.apache.doris.analysis.SlotDescriptor;
+import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.statistics.ColumnDict;
 
 import org.apache.doris.statistics.IDictManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DictPlanner {
@@ -32,8 +46,10 @@ public class DictPlanner {
 
     private Analyzer analyzer;
 
+
+
     public void assignDict(PlanNode root) {
-        getAllPotentialAvailableDict(root);
+        getAllPotentialAvailableDict(null, root);
         Set<AggregationNode> aggNodeSet = dictContext.aggNodeToSlotList.keySet();
         for (AggregationNode aggNode : aggNodeSet) {
             for (PlanNode child : aggNode.getChildren()) {
@@ -41,22 +57,28 @@ public class DictPlanner {
             }
         }
 
+
     }
 
     private void updateTuples(PlanNode root) {
 
     }
 
-    private void getAllPotentialAvailableDict(PlanNode root) {
-        if (root instanceof OlapScanNode) {
-            getAllPotentialAvailableDictFromScanNode((OlapScanNode) root);
+    private void insertDecodeNode() {
+
+    }
+
+    private void getAllPotentialAvailableDict(PlanNode parent, PlanNode child) {
+        if (child instanceof OlapScanNode) {
+            getAllPotentialAvailableDictFromScanNode((OlapScanNode) child);
             return;
         }
-        for (PlanNode planNode : root.getChildren()) {
-            getAllPotentialAvailableDict(planNode);
+        for (PlanNode planNode : child.getChildren()) {
+            getAllPotentialAvailableDict(child, planNode);
         }
-        if (root instanceof AggregationNode) {
-            AggregationNode aggNode = (AggregationNode) root;
+        if (child instanceof AggregationNode) {
+            AggregationNode aggNode = (AggregationNode) child;
+            dictContext.recordParentOfAgg(aggNode, parent);
             addToContextIfUsingDictColumn(aggNode);
         }
     }
@@ -106,7 +128,6 @@ public class DictPlanner {
         for (PlanNode planNode: node.getChildren()) {
             removeUnavailableDictByPlanNode(root, planNode);
         }
-
     }
 
     private <T extends Expr> void removeUnavailableDictByExprList(AggregationNode aggNode, List<T> exprList) {
@@ -115,7 +136,7 @@ public class DictPlanner {
         }
     }
     private <T extends Expr> void removeUnavailableDictByExpr(AggregationNode aggNode, T expr) {
-        if (expr instanceof SlotRef) {
+        if (expr instanceof SlotRef || expr instanceof LiteralExpr) {
             return;
         }
         if (expr instanceof FunctionCallExpr) {
@@ -132,16 +153,14 @@ public class DictPlanner {
         List<Expr> exprList = expr.getChildren();
         for (Expr childExpr: exprList) {
             if (childExpr instanceof  SlotRef) {
-
+                removeUnavailableDictBySlotRef(aggNode, (SlotRef) childExpr);
+            } else {
+                removeUnavailableDictByExpr(aggNode, childExpr);
             }
         }
-
-
     }
 
     private void removeUnavailableDictBySlotRef(AggregationNode aggNode, SlotRef slotRef) {
-        String columnName = slotRef.getColumnName();
-        long tableId = slotRef.getTable().getId();
         dictContext.removeFromAlternativeDicts(aggNode, slotRef);
     }
 
@@ -173,9 +192,9 @@ public class DictPlanner {
 
         Map<Long, Map<String, Integer>> tableIdToColumnDict = new HashMap<>();
 
-        private Set<SlotDescriptor> downstreamSlotSet = new HashSet<>();
-
         private Map<AggregationNode, List<SlotRef>> aggNodeToSlotList = new HashMap<>();
+
+        private Map<AggregationNode, PlanNode> aggToParent = new HashMap<>();
 
         public void addPotentialAvailableDict(long tableId, String columnName, int dictId) {
             Map<String, Integer> colToDict = tableIdToColumnDict.getOrDefault(tableId, new HashMap<>());
@@ -213,6 +232,10 @@ public class DictPlanner {
 
         public List<SlotRef> getDictSlotForAggNode(AggregationNode aggNode) {
             return aggNodeToSlotList.getOrDefault(aggNode, new ArrayList<>());
+        }
+
+        public void recordParentOfAgg(AggregationNode agg, PlanNode parent) {
+            aggToParent.put(agg, parent);
         }
     }
 
