@@ -25,6 +25,7 @@ import org.apache.doris.analysis.Analyzer;
 import org.apache.doris.analysis.Expr;
 import org.apache.doris.analysis.FunctionCallExpr;
 import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.SlotRef;
 import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.VectorizedUtil;
@@ -43,6 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -352,27 +354,12 @@ public class AggregationNode extends PlanNode {
 
     @Override
     public void filterDictSlot(PlanContext context) {
-        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
         Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
-        conjuncts.forEach(e -> {
-            int srcSlotId = e.getSrcSlotRef().getId().asInt();
-            if (dictCodableSlot.contains(srcSlotId)) {
-                disabledDictOptimizationSlotIdSet.add(srcSlotId);
-            }
-        });
         List<Expr> groupingExpr = aggInfo.getGroupingExprs();
-        // we should support some scalar functions, such as lower upper sub_str e.g.
+        // we should support some scalar functions in the future, such as lower upper sub_str e.g.
         groupingExpr.forEach(e -> {
-            if (e instanceof FunctionCallExpr) {
-                FunctionCallExpr func = (FunctionCallExpr) e;
-                String name = func.getFnName().getFunction();
-                if (name.equalsIgnoreCase("lower") ||
-                    name.equalsIgnoreCase("upper") ||
-                    name.equalsIgnoreCase("sub_str")) {
-
-                }
-            }
+            SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
         });
-        dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
+        super.filterDictSlot(context);
     }
 }

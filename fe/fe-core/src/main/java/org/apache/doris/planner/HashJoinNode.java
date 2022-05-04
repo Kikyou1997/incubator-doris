@@ -765,4 +765,18 @@ public class HashJoinNode extends PlanNode {
         }
         super.convertToVectoriezd();
     }
+
+    @Override
+    public void filterDictSlot(PlanContext context) {
+        Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
+        eqJoinConjuncts.forEach(e -> {
+            Pair<SlotId, SlotId> slotPair = e.getEqSlots();
+            disabledDictOptimizationSlotIdSet.add(slotPair.first.asInt());
+            disabledDictOptimizationSlotIdSet.add(slotPair.second.asInt());
+        });
+        otherJoinConjuncts.forEach(e -> {
+            SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
+        });
+        super.filterDictSlot(context);
+    }
 }

@@ -937,6 +937,16 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         return  false;
     }
 
-    public void filterDictSlot(PlanContext context) {}
+    public void filterDictSlot(PlanContext context) {
+        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
+        Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
+        conjuncts.forEach(e -> {
+            int srcSlotId = e.getSrcSlotRef().getId().asInt();
+            if (dictCodableSlot.contains(srcSlotId)) {
+                disabledDictOptimizationSlotIdSet.add(srcSlotId);
+            }
+        });
+        dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
+    }
 
 }
