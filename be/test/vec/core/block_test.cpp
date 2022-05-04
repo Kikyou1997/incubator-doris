@@ -34,6 +34,7 @@
 #include "vec/common/exception.h"
 #include "vec/data_types/data_type.h"
 #include "vec/data_types/data_type_nullable.h"
+#include "vec/data_types/data_type_dict_encoded_string.h"
 #include "vec/runtime/vdatetime_value.h"
 namespace doris {
 
@@ -325,6 +326,36 @@ TEST(BlockTest, SerializeAndDeserializeBlock) {
         block_to_pb(block2, &pblock2);
         std::string s2 = pblock2.DebugString();
         EXPECT_EQ(s1, s2);
+    }
+    // uint_8 encoded string
+    {
+        vectorized::DataTypePtr data_type =
+                std::make_shared<vectorized::DataTypeDictEncodedStringUInt8>();
+        vectorized::MutableColumnPtr encoded_column = data_type->create_column();
+        auto col = assert_cast<vectorized::ColumnDictEncodedStringUInt8*>(encoded_column.get());
+        col->set_dict_id(0);
+        for (size_t i = 0; i < 10; ++i) {
+            col->insert_value(i);
+        }
+
+        vectorized::ColumnWithTypeAndName type_and_name(encoded_column->get_ptr(), data_type,
+                                                        "test_dict_encoded_string_uint8");
+
+        vectorized::Block block({type_and_name});
+        PBlock pblock;
+        block_to_pb(block, &pblock);
+        std::string s1 = pblock.DebugString();
+
+        vectorized::Block block2(pblock);
+        PBlock pblock2;
+        block_to_pb(block2, &pblock2);
+        std::string s2 = pblock2.DebugString();
+        EXPECT_EQ(s1, s2);
+
+        const vectorized::ColumnWithTypeAndName& encoded_column2 = block2.get_by_position(0);
+        auto col2 = assert_cast<const vectorized::ColumnDictEncodedStringUInt8*>(
+                encoded_column2.column.get());
+        EXPECT_EQ(col2->get_dict_id(), col->get_dict_id());
     }
 }
 

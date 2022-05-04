@@ -14,38 +14,35 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-// This file is copied from
-// https://github.com/apache/impala/blob/branch-2.9.0/be/src/runtime/string-value.h
-// and modified by Doris
 
 #pragma once
 
-#include "runtime/string_value.h"
 #include "vec/runtime/dict/dict.h"
-#include "vec/columns/column.h"
+#include "vec/core/columns_with_type_and_name.h"
 
 namespace doris {
-namespace vectorized{  
-class GlobalDict: public Dict<int>{
-public:        
-    GlobalDict(const std::vector<std::string>& data): Dict(data) {};
+namespace vectorized {
+class GlobalDict : public Dict<int> {
+public:
+    GlobalDict(const std::vector<std::string>& data) : Dict(data) {};
+
     //string column to int column
-    MutableColumnPtr encode(ColumnPtr column);
+    bool encode(ColumnWithTypeAndName& col);
+
     //int column to string column
-    MutableColumnPtr decode(ColumnPtr column);
-    int id(){ return _id; };
+    bool decode(ColumnWithTypeAndName& col);
+
+    int id() { return _id; };
+
     size_t version() { return _version; };
+
 private:
-
-    int cardinality();
     // dict version
-    size_t _version;
-    int _id;
-
+    size_t _version = 0;
+    int _id = -1;
 };
 
 using GlobalDictSPtr = std::shared_ptr<GlobalDict>;
 
-
-}   //namespace vectorized
-}   //namespace doris
+} //namespace vectorized
+} //namespace doris

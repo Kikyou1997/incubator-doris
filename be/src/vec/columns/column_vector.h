@@ -98,7 +98,7 @@ struct CompareHelper<Float64> : public FloatCompareHelper<Float64> {};
 /** A template for columns that use a simple array to store.
  */
 template <typename T>
-class ColumnVector final : public COWHelper<ColumnVectorHelper, ColumnVector<T>> {
+class ColumnVector : public COWHelper<ColumnVectorHelper, ColumnVector<T>> {
     static_assert(!IsDecimalNumber<T>);
 
 private:
@@ -112,7 +112,7 @@ public:
     using value_type = T;
     using Container = PaddedPODArray<value_type>;
 
-private:
+protected:
     ColumnVector() {}
     ColumnVector(const size_t n) : data(n) {}
     ColumnVector(const size_t n, const value_type x) : data(n, x) {}

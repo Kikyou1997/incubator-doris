@@ -248,6 +248,15 @@ DataTypePtr DataTypeFactory::create_data_type(const PColumnMeta& pcolumn) {
         DCHECK(pcolumn.children_size() == 1);
         nested = std::make_shared<DataTypeArray>(create_data_type(pcolumn.children(0)));
         break;
+    case PGenericType::DICT_UINT8:
+        nested = std::make_shared<DataTypeDictEncodedStringUInt8>();
+        break;
+    case PGenericType::DICT_UINT16:
+        nested = std::make_shared<DataTypeDictEncodedStringUInt16>();
+        break;
+    case PGenericType::DICT_UINT32:
+        nested = std::make_shared<DataTypeDictEncodedStringUInt32>();
+        break;
     default: {
         LOG(FATAL) << fmt::format("Unknown data type: {}", pcolumn.type());
         return nullptr;

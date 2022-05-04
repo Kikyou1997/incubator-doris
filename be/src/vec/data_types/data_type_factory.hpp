@@ -36,6 +36,7 @@
 #include "vec/data_types/data_type_nullable.h"
 #include "vec/data_types/data_type_number.h"
 #include "vec/data_types/data_type_string.h"
+#include "vec/data_types/data_type_dict_encoded_string.h"
 
 namespace doris::vectorized {
 
@@ -64,6 +65,9 @@ public:
             instance.register_data_type("String", std::make_shared<DataTypeString>());
             instance.register_data_type("Decimal",
                                       std::make_shared<DataTypeDecimal<Decimal128>>(27, 9));
+            instance.register_data_type("DictEncodedStringUInt8", std::make_shared<DataTypeDictEncodedStringUInt8>());
+            instance.register_data_type("DictEncodedStringUInt16", std::make_shared<DataTypeDictEncodedStringUInt16>());
+            instance.register_data_type("DictEncodedStringUInt32", std::make_shared<DataTypeDictEncodedStringUInt32>());
         });
         return instance;
     }

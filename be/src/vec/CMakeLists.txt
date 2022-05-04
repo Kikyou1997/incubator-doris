@@ -190,6 +190,7 @@ set(VEC_FILES
   runtime/vdata_stream_mgr.cpp
   runtime/vpartition_info.cpp
   runtime/vsorted_run_merger.cpp
+  runtime/dict/global_dict.cpp
   )
 
 add_library(Vec STATIC

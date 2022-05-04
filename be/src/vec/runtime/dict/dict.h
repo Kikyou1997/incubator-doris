@@ -14,9 +14,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-// This file is copied from
-// https://github.com/apache/impala/blob/branch-2.9.0/be/src/runtime/string-value.h
-// and modified by Doris
 
 #pragma once
 
@@ -116,6 +113,9 @@ public:
     T convert_code(const T& code) const { return _code_convert_map.find(code)->second; }
 
     size_t byte_size() { return _dict_data.size() * sizeof(_dict_data[0]); }
+
+protected:
+    size_t cardinality() { return _dict_data.size(); }
 
 private:
     StringValue::Comparator _comparator;

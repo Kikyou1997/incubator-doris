@@ -73,6 +73,9 @@ enum class TypeIndex {
     LowCardinality,
     BitMap,
     HLL,
+    DictUInt8,
+    DictUInt16,
+    DictUInt32
 };
 
 struct Consted {
@@ -429,6 +432,12 @@ inline const char* getTypeName(TypeIndex idx) {
         return TypeName<BitmapValue>::get();
     case TypeIndex::HLL:
         return TypeName<HyperLogLog>::get();
+    case TypeIndex::DictUInt8:
+        return "DictUInt8";
+    case TypeIndex::DictUInt16:
+        return "DictUInt16";
+    case TypeIndex::DictUInt32:
+        return "DictUInt32";
     }
 
     __builtin_unreachable();

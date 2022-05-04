@@ -135,6 +135,12 @@ PGenericType_TypeId IDataType::get_pdata_type(const IDataType* data_type) {
         return PGenericType::HLL;
     case TypeIndex::Array:
         return PGenericType::LIST;
+    case TypeIndex::DictUInt8:
+        return PGenericType::DICT_UINT8;
+    case TypeIndex::DictUInt16:
+        return PGenericType::DICT_UINT16;
+    case TypeIndex::DictUInt32:
+        return PGenericType::DICT_UINT32;
     default:
         return PGenericType::UNKNOWN;
     }
