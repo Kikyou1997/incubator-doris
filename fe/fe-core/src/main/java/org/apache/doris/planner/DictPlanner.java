@@ -30,6 +30,7 @@ import org.apache.doris.analysis.SlotId;
 import org.apache.doris.analysis.SlotRef;
 import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.catalog.Column;
+import org.apache.doris.catalog.Table;
 import org.apache.doris.catalog.Type;
 import org.apache.doris.statistics.ColumnDict;
 
@@ -59,6 +60,16 @@ public class DictPlanner {
             for (PlanNode child : aggNode.getChildren()) {
                 removeUnavailableDictByPlanNode(aggNode, child);
             }
+        }
+        insertDecodeNode();
+    }
+
+    private void insertDecodeNode() {
+        for (Map.Entry<AggregationNode, List<SlotRef>> entry : dictContext.aggNodeToSlotList.entrySet()) {
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
+            dictContext.getDictBySlot()
         }
     }
 
@@ -217,7 +228,11 @@ public class DictPlanner {
         }
 
         public ColumnDict getDictBySlot(SlotRef slotRef) {
-            long tableId = slotRef.getTable().getId();
+            Table table = slotRef.getTable();
+            if (table == null) {
+                return null;
+            }
+            long tableId = table.getId();
             String columnName = slotRef.getColumnName();
             Map<String, ColumnDict> colToDict = tableIdToColumnDict.get(tableId);
             if (colToDict == null) {
@@ -238,6 +253,10 @@ public class DictPlanner {
 
         public void recordParentOfAgg(AggregationNode agg, PlanNode parent) {
             aggToParent.put(agg, parent);
+        }
+
+        public PlanNode getParentOfAgg() {
+
         }
     }
 

@@ -29,7 +29,7 @@ public interface IDictManager {
             @Override
             public ColumnDict getDict(long tableId, String colName) {
                 switch (colName) {
-                    case "col1":
+                    case "v1":
                         return new ColumnDict() {
                             public List<String> getDict() {
                                 List<String> l = new ArrayList<>();
@@ -37,7 +37,7 @@ public interface IDictManager {
                                 return l;
                             }
                         };
-                    case "col2":
+                    case "v2":
                         return new ColumnDict() {
                             public List<String> getDict() {
                                 List<String> l = new ArrayList<>();
