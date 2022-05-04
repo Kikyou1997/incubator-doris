@@ -932,4 +932,11 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         sb.append("\n").append(getNodeExplainString("", TExplainLevel.BRIEF));
         return sb.toString();
     }
+
+    public boolean couldApplyGlobalDictOptimization(PlanContext context) {
+        return  false;
+    }
+
+    public void filterDictSlot(PlanContext context) {}
+
 }

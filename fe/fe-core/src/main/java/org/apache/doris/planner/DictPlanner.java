@@ -73,20 +73,7 @@ public class DictPlanner {
         }
     }
 
-    private void getAllPotentialAvailableDict(PlanNode parent, PlanNode child) {
-        if (child instanceof OlapScanNode) {
-            getAllPotentialAvailableDictFromScanNode((OlapScanNode) child);
-            return;
-        }
-        for (PlanNode planNode : child.getChildren()) {
-            getAllPotentialAvailableDict(child, planNode);
-        }
-        if (child instanceof AggregationNode) {
-            AggregationNode aggNode = (AggregationNode) child;
-            dictContext.recordParentOfAgg(aggNode, parent);
-            addToContextIfUsingDictColumn(aggNode);
-        }
-    }
+
 
     private void addToContextIfUsingDictColumn(AggregationNode aggNode) {
         AggregateInfo aggregateInfo = aggNode.getAggInfo();
@@ -180,26 +167,9 @@ public class DictPlanner {
         dictContext.removeFromAlternativeDicts(aggNode, slotRef);
     }
 
-    private void getAllPotentialAvailableDictFromScanNode(OlapScanNode root) {
-        TupleDescriptor tupleDesc = root.getTupleDesc();
-        long tableId = root.getOlapTable().getId();
-        List<SlotDescriptor> slotsList = tupleDesc.getSlots();
-        for (SlotDescriptor slotDesc : slotsList) {
-            Column column = slotDesc.getColumn();
-            String colName = column.getName();
-            ColumnDict columnDict = tryToGetColumnDict(tableId, colName);
-            if (columnDict == null) {
-                continue;
-            }
-            dictContext.addPotentialAvailableDict(tableId, colName, columnDict);
-        }
-    }
 
-    private ColumnDict tryToGetColumnDict(long tableId, String columnName) {
-        IDictManager dictManager = IDictManager.getInstance();
-        ColumnDict dict = dictManager.getDict(tableId, columnName);
-        return dict;
-    }
+
+
 
     private static class DictContext {
 

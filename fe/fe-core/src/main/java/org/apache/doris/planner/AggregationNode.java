@@ -349,4 +349,30 @@ public class AggregationNode extends PlanNode {
         result.addAll(aggregateSlotIds);
         return result;
     }
+
+    @Override
+    public void filterDictSlot(PlanContext context) {
+        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
+        Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
+        conjuncts.forEach(e -> {
+            int srcSlotId = e.getSrcSlotRef().getId().asInt();
+            if (dictCodableSlot.contains(srcSlotId)) {
+                disabledDictOptimizationSlotIdSet.add(srcSlotId);
+            }
+        });
+        List<Expr> groupingExpr = aggInfo.getGroupingExprs();
+        // we should support some scalar functions, such as lower upper sub_str e.g.
+        groupingExpr.forEach(e -> {
+            if (e instanceof FunctionCallExpr) {
+                FunctionCallExpr func = (FunctionCallExpr) e;
+                String name = func.getFnName().getFunction();
+                if (name.equalsIgnoreCase("lower") ||
+                    name.equalsIgnoreCase("upper") ||
+                    name.equalsIgnoreCase("sub_str")) {
+
+                }
+            }
+        });
+        dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
+    }
 }
