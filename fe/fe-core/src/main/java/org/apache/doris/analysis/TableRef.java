@@ -102,6 +102,8 @@ public class TableRef implements ParseNode, Writable {
     // ///////////////////////////////////////
     // BEGIN: Members that need to be reset()
 
+    private boolean isMetaScan;
+
     protected Expr onClause;
 
     // the ref to the left of us, if we're part of a JOIN clause
@@ -217,6 +219,7 @@ public class TableRef implements ParseNode, Writable {
         ErrorReport.reportAnalysisException(ErrorCode.ERR_UNRESOLVED_TABLE_REF, tableRefToSql());
         return null;
     }
+
 
     public JoinOperator getJoinOp() {
         // if it's not explicitly set, we're doing an inner join
@@ -420,11 +423,13 @@ public class TableRef implements ParseNode, Writable {
         if (commonHints == null || commonHints.isEmpty()) {
             return;
         }
-        // Currently only 'PREAGGOPEN' is supported
+        // Currently only 'PREAGGOPEN' and 'META' is supported
         for (String hint : commonHints) {
-            if (hint.toUpperCase().equals("PREAGGOPEN")) {
+            String normalizedHint = hint.toUpperCase();
+            if (normalizedHint.equals("PREAGGOPEN")) {
                 isForcePreAggOpened = true;
-                break;
+            } else if (normalizedHint.equals("META")) {
+                isMetaScan = true;
             }
         }
     }
@@ -575,7 +580,15 @@ public class TableRef implements ParseNode, Writable {
     public void rewriteExprs(ExprRewriter rewriter, Analyzer analyzer)
             throws AnalysisException {
         Preconditions.checkState(isAnalyzed);
-        if (onClause != null) onClause = rewriter.rewrite(onClause, analyzer, ExprRewriter.ClauseType.ON_CLAUSE);
+        if (onClause != null) {
+            Expr expr = onClause.clone();
+            onClause = rewriter.rewrite(onClause, analyzer, ExprRewriter.ClauseType.ON_CLAUSE);
+            if (joinOp.isOuterJoin() || joinOp.isSemiAntiJoin()) {
+                if (onClause instanceof BoolLiteral && !((BoolLiteral) onClause).getValue()) {
+                    onClause = expr;
+                }
+            }
+        }
     }
 
     private String joinOpToSql() {
@@ -714,6 +727,10 @@ public class TableRef implements ParseNode, Writable {
 
     public boolean isResolved() {
         return !getClass().equals(TableRef.class);
+    }
+
+    public boolean isMetaScan() {
+        return isMetaScan;
     }
 
     /**

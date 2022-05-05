@@ -51,7 +51,7 @@ enum TPlanNodeType {
   INTERSECT_NODE,
   EXCEPT_NODE,
   ODBC_SCAN_NODE,
-  TABLE_FUNCTION_NODE,
+  TABLE_FUNCTION_NODE
 }
 
 // phases of an execution node
@@ -333,11 +333,8 @@ struct TSchemaScanNode {
 }
 
 struct TMetaScanNode {
-  1: required Types.TTupleId tuple_id
-  2: required string table_name
-  3: optional string db
-  4: optional string table
-  5: optional string user
+  1: optional Types.TTupleId tuple_id
+  2: optional map<Types.TSlotId, i32> slot_to_dict
 }
 
 struct TOlapScanNode {

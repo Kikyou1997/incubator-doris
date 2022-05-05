@@ -341,6 +341,7 @@ public final class AggregateInfo extends AggregateInfoBase {
 
     public boolean isMerge() { return aggPhase_.isMerge(); }
     public boolean isDistinctAgg() { return secondPhaseDistinctAggInfo_ != null; }
+
     public ExprSubstitutionMap getIntermediateSmap() { return intermediateTupleSmap_; }
     public ExprSubstitutionMap getOutputSmap() { return outputTupleSmap_; }
     public ExprSubstitutionMap getOutputToIntermediateSmap() {
