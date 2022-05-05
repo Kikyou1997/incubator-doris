@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -433,6 +434,8 @@ public class SlotRef extends Expr {
         slotRef.readFields(in);
         return slotRef;
     }
+
+
 
     @Override
     public boolean isNullable() {

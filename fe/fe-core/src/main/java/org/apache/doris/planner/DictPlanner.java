@@ -17,49 +17,63 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.*;
+import com.google.common.base.Preconditions;
+import org.apache.doris.analysis.AggregateInfo;
+import org.apache.doris.analysis.Analyzer;
+import org.apache.doris.analysis.BinaryPredicate;
+import org.apache.doris.analysis.Expr;
+import org.apache.doris.analysis.FunctionCallExpr;
+import org.apache.doris.analysis.FunctionParams;
+import org.apache.doris.analysis.LiteralExpr;
+import org.apache.doris.analysis.SlotDescriptor;
+import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.catalog.Column;
+import org.apache.doris.catalog.Table;
+import org.apache.doris.catalog.Type;
 import org.apache.doris.statistics.ColumnDict;
 
 import org.apache.doris.statistics.IDictManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DictPlanner {
 
-    private DictContext dictContext;
+    private DictContext dictContext = new DictContext();
 
     private Analyzer analyzer;
 
+    public DictPlanner(Analyzer analyzer) {
+        this.analyzer = analyzer;
+    }
+
     public void assignDict(PlanNode root) {
-        getAllPotentialAvailableDict(root);
+        getAllPotentialAvailableDict(null, root);
         Set<AggregationNode> aggNodeSet = dictContext.aggNodeToSlotList.keySet();
         for (AggregationNode aggNode : aggNodeSet) {
             for (PlanNode child : aggNode.getChildren()) {
                 removeUnavailableDictByPlanNode(aggNode, child);
             }
         }
-
+        insertDecodeNode();
     }
 
-    private void updateTuples(PlanNode root) {
-
-    }
-
-    private void getAllPotentialAvailableDict(PlanNode root) {
-        if (root instanceof OlapScanNode) {
-            getAllPotentialAvailableDictFromScanNode((OlapScanNode) root);
-            return;
-        }
-        for (PlanNode planNode : root.getChildren()) {
-            getAllPotentialAvailableDict(planNode);
-        }
-        if (root instanceof AggregationNode) {
-            AggregationNode aggNode = (AggregationNode) root;
-            addToContextIfUsingDictColumn(aggNode);
+    private void insertDecodeNode() {
+        for (Map.Entry<AggregationNode, List<SlotRef>> entry : dictContext.aggNodeToSlotList.entrySet()) {
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
+            dictContext.getDictBySlot()
         }
     }
+
+
 
     private void addToContextIfUsingDictColumn(AggregationNode aggNode) {
         AggregateInfo aggregateInfo = aggNode.getAggInfo();
@@ -73,8 +87,8 @@ public class DictPlanner {
 
     // TODO(kikyo): process all PlanNode type
     private void removeUnavailableDictByPlanNode(AggregationNode root, PlanNode node) {
-        List<Expr> conjuncts = node.getConjuncts();
-        removeUnavailableDictByExprList(root, conjuncts);
+        List<Expr> conjunctList = node.getConjuncts();
+        removeUnavailableDictByExprList(root, conjunctList);
         if (node instanceof AggregationNode) {
             AggregationNode aggNode = (AggregationNode) node;
             AggregateInfo aggInfo = aggNode.getAggInfo();
@@ -93,20 +107,30 @@ public class DictPlanner {
             scanNodeSlotIdSet.forEach(x -> {
               SlotRef correspondingSlot = null;
               for (SlotRef slotRef: aggNodeDictSlotList) {
-                  if (slotRef.getSlotId().equals(x)) {
+                  SlotId slotId = slotRef.getSlotId();
+                  if (slotId.equals(x)) {
+                      SlotDescriptor slotDesc = slotRef.getDesc();
+                      int slotOffset = slotDesc.getSlotOffset();
+                      TupleDescriptor tupleDesc = slotDesc.getParent();
+//                      TupleDescriptor tupleWithDict =
+//                          analyzer.getDescTbl().copyTupleDescriptor(tupleDesc.getId(), "tuple-with-dict");
+                      ColumnDict dict = dictContext.getDictBySlot(slotRef);
+                      Preconditions.checkState(dict != null);
+                      analyzer.putDict(slotId.asInt(), dict);
+                      tupleDesc.updateSlotType(slotOffset, Type.INT);
                       correspondingSlot =  slotRef;
                       break;
                   }
               }
+
               if (correspondingSlot != null) {
-                  olapScanNode.addDict(correspondingSlot.getSlotId(), dictContext.getDictIdBySlot(correspondingSlot));
+                  olapScanNode.addDictAppliedSlot(correspondingSlot.getSlotId());
               }
             });
         }
         for (PlanNode planNode: node.getChildren()) {
             removeUnavailableDictByPlanNode(root, planNode);
         }
-
     }
 
     private <T extends Expr> void removeUnavailableDictByExprList(AggregationNode aggNode, List<T> exprList) {
@@ -115,7 +139,7 @@ public class DictPlanner {
         }
     }
     private <T extends Expr> void removeUnavailableDictByExpr(AggregationNode aggNode, T expr) {
-        if (expr instanceof SlotRef) {
+        if (expr instanceof SlotRef || expr instanceof LiteralExpr) {
             return;
         }
         if (expr instanceof FunctionCallExpr) {
@@ -132,54 +156,32 @@ public class DictPlanner {
         List<Expr> exprList = expr.getChildren();
         for (Expr childExpr: exprList) {
             if (childExpr instanceof  SlotRef) {
-
+                removeUnavailableDictBySlotRef(aggNode, (SlotRef) childExpr);
+            } else {
+                removeUnavailableDictByExpr(aggNode, childExpr);
             }
         }
-
-
     }
 
     private void removeUnavailableDictBySlotRef(AggregationNode aggNode, SlotRef slotRef) {
-        String columnName = slotRef.getColumnName();
-        long tableId = slotRef.getTable().getId();
         dictContext.removeFromAlternativeDicts(aggNode, slotRef);
     }
 
-    private void getAllPotentialAvailableDictFromScanNode(OlapScanNode root) {
-        TupleDescriptor tupleDesc = root.getTupleDesc();
-        long tableId = root.getOlapTable().getId();
-        List<SlotDescriptor> slotsList = tupleDesc.getSlots();
-        for (SlotDescriptor slotDesc : slotsList) {
-            Column column = slotDesc.getColumn();
-            String colName = column.getName();
-            int dictId = tryToGetColumnDict(tableId, colName);
-            if (dictId < 0) {
-                continue;
-            }
-            dictContext.addPotentialAvailableDict(tableId, colName, dictId);
-        }
-    }
 
-    private int tryToGetColumnDict(long tableId, String columnName) {
-        IDictManager dictManager = IDictManager.getInstance();
-        ColumnDict dict = dictManager.getDict(tableId);
-        if (dict == null) {
-            return -1;
-        }
-        return dict.getDict(columnName);
-    }
+
+
 
     private static class DictContext {
 
-        Map<Long, Map<String, Integer>> tableIdToColumnDict = new HashMap<>();
-
-        private Set<SlotDescriptor> downstreamSlotSet = new HashSet<>();
+        Map<Long, Map<String, ColumnDict>> tableIdToColumnDict = new HashMap<>();
 
         private Map<AggregationNode, List<SlotRef>> aggNodeToSlotList = new HashMap<>();
 
-        public void addPotentialAvailableDict(long tableId, String columnName, int dictId) {
-            Map<String, Integer> colToDict = tableIdToColumnDict.getOrDefault(tableId, new HashMap<>());
-            colToDict.put(columnName, dictId);
+        private Map<AggregationNode, PlanNode> aggToParent = new HashMap<>();
+
+        public void addPotentialAvailableDict(long tableId, String columnName, ColumnDict dict) {
+            Map<String, ColumnDict> colToDict = tableIdToColumnDict.getOrDefault(tableId, new HashMap<>());
+            colToDict.put(columnName, dict);
             tableIdToColumnDict.put(tableId, colToDict);
         }
 
@@ -192,13 +194,17 @@ public class DictPlanner {
         }
 
         public boolean havingDict(SlotRef slotRef) {
-            return getDictIdBySlot(slotRef) != null;
+            return getDictBySlot(slotRef) != null;
         }
 
-        public Integer getDictIdBySlot(SlotRef slotRef) {
-            long tableId = slotRef.getTable().getId();
+        public ColumnDict getDictBySlot(SlotRef slotRef) {
+            Table table = slotRef.getTable();
+            if (table == null) {
+                return null;
+            }
+            long tableId = table.getId();
             String columnName = slotRef.getColumnName();
-            Map<String, Integer> colToDict = tableIdToColumnDict.get(tableId);
+            Map<String, ColumnDict> colToDict = tableIdToColumnDict.get(tableId);
             if (colToDict == null) {
                 return null;
             }
@@ -213,6 +219,14 @@ public class DictPlanner {
 
         public List<SlotRef> getDictSlotForAggNode(AggregationNode aggNode) {
             return aggNodeToSlotList.getOrDefault(aggNode, new ArrayList<>());
+        }
+
+        public void recordParentOfAgg(AggregationNode agg, PlanNode parent) {
+            aggToParent.put(agg, parent);
+        }
+
+        public PlanNode getParentOfAgg() {
+
         }
     }
 

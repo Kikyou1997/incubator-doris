@@ -23,6 +23,7 @@ package org.apache.doris.analysis;
 import org.apache.doris.catalog.ColumnStats;
 import org.apache.doris.catalog.PrimitiveType;
 import org.apache.doris.catalog.Table;
+import org.apache.doris.catalog.Type;
 import org.apache.doris.thrift.TTupleDescriptor;
 
 import com.google.common.base.Joiner;
@@ -370,6 +371,10 @@ public class TupleDescriptor {
                 .add("is_materialized", isMaterialized)
                 .add("slots", "[" + Joiner.on(", ").join(slotStrings) + "]")
                 .toString();
+    }
+
+    public void updateSlotType(int offset, Type type) {
+        slots.get(offset).setType(type);
     }
 
     public String getExplainString() {

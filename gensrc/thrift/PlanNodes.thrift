@@ -51,7 +51,8 @@ enum TPlanNodeType {
   INTERSECT_NODE,
   EXCEPT_NODE,
   ODBC_SCAN_NODE,
-  TABLE_FUNCTION_NODE
+  TABLE_FUNCTION_NODE,
+  DECODE_NODE
 }
 
 // phases of an execution node
@@ -293,6 +294,11 @@ struct TEsScanNode {
 struct TMiniLoadEtlFunction {
   1: required string function_name
   2: required i32 param_column_index
+}
+
+struct TDecodeNode {
+    //slot_id to global_dict_id
+    1: required map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TCsvScanNode {
@@ -786,6 +792,7 @@ struct TPlanNode {
   35: optional TOdbcScanNode odbc_scan_node
   // Runtime filters assigned to this plan node, exist in HashJoinNode and ScanNode
   36: optional list<TRuntimeFilterDesc> runtime_filters
+  37: optional TDecodeNode decode_node
 
   // Use in vec exec engine
   40: optional Exprs.TExpr vconjunct

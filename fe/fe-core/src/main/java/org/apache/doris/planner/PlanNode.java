@@ -966,4 +966,21 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         sb.append("\n").append(getNodeExplainString("", TExplainLevel.BRIEF));
         return sb.toString();
     }
+
+    public boolean couldApplyGlobalDictOptimization(PlanContext context) {
+        return  false;
+    }
+
+    public void filterDictSlot(PlanContext context) {
+        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
+        Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
+        conjuncts.forEach(e -> {
+            int srcSlotId = e.getSrcSlotRef().getId().asInt();
+            if (dictCodableSlot.contains(srcSlotId)) {
+                disabledDictOptimizationSlotIdSet.add(srcSlotId);
+            }
+        });
+        dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
+    }
+
 }

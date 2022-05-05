@@ -1108,6 +1108,10 @@ public class FunctionCallExpr extends Expr {
         return true;
     }
 
+    public Set<SlotRef> getAllSlots() {
+
+    }
+
     @Override
     protected boolean isConstantImpl() {
         // TODO: we can't correctly determine const-ness before analyzing 'fn_'. We should

@@ -280,6 +280,8 @@ struct TColumnDict {
   2: list<string> str_dict  // map one string to a integer, using offset as id
 }
 
+// ExecPlanFragment
+
 struct TGlobalDict {
   1: optional map<i32, TColumnDict> dicts,  // map dict_id to column dict
   2: optional map<i32, i32> slot_dicts // map from slot id to column dict id, because 2 or more column may share the dict
