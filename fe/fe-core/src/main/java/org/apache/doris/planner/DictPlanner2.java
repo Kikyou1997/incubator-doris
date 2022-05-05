@@ -1,6 +1,5 @@
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.Expr;
 import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.catalog.Column;
@@ -15,14 +14,23 @@ public class DictPlanner2 {
 
     public void plan(PlanNode plan) {
         findDictCodableSlot(plan);
-        // for now, we only support the column used for aggregation, if it was used in
+        // for now, we only support the dict column used for aggregation, if it was used in
         // some other expressions then we simply disable the dict optimization on it
         filterSupportedDictSlot(plan);
+
+        updateNodes(plan);
+
+    }
+
+    private void updateNodes(PlanNode plan) {
 
     }
 
     private void filterSupportedDictSlot(PlanNode plan) {
-
+        plan.filterDictSlot(context);
+        for (PlanNode child: plan.getChildren()) {
+            findDictCodableSlot(child);
+        }
     }
 
 
@@ -57,16 +65,6 @@ public class DictPlanner2 {
         IDictManager dictManager = IDictManager.getInstance();
         ColumnDict dict = dictManager.getDict(tableId, columnName);
         return dict;
-    }
-
-    public static class ExprProcessor {
-
-        public static void process(Expr expr, PlanContext context) {
-
-        }
-
-
-
     }
 
 }

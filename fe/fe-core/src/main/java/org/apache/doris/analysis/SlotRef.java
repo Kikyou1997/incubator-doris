@@ -442,4 +442,9 @@ public class SlotRef extends Expr {
         Preconditions.checkNotNull(desc);
         return desc.getIsNullable();
     }
+
+    @Override
+    public boolean couldApplyDictOptimization() {
+        return false;
+    }
 }

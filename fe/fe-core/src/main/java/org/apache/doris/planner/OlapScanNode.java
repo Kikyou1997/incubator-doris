@@ -46,6 +46,7 @@ import org.apache.doris.catalog.PartitionItem;
 import org.apache.doris.catalog.PartitionType;
 import org.apache.doris.catalog.Replica;
 import org.apache.doris.catalog.Tablet;
+import org.apache.doris.catalog.Type;
 import org.apache.doris.common.AnalysisException;
 import org.apache.doris.common.ErrorCode;
 import org.apache.doris.common.ErrorReport;
@@ -948,6 +949,27 @@ public class OlapScanNode extends ScanNode {
             return DataPartition.hashPartitioned(dataDistributeExprs);
         } else {
             return DataPartition.RANDOM;
+        }
+    }
+
+    @Override
+    public void updateSlots(PlanContext context) {
+        List<SlotDescriptor> slotDescriptorList = desc.getSlots();
+        Set<SlotDescriptor> slotSet = slotDescriptorList
+            .stream()
+            .filter(d -> context.getAllDictCodableSlot().contains(d.getId().asInt()))
+            .collect(Collectors.toSet());
+
+        if (slotSet.size() > 0) {
+            context.setEncoded(true);
+        }
+
+        desc = context.generateTupleDesc(desc.getId());
+        List<SlotDescriptor> newSlotDescList = desc.getSlots();
+        for (SlotDescriptor slotDesc : slotSet) {
+            SlotDescriptor newSlotDesc =  newSlotDescList.get(slotDesc.getSlotOffset());
+            newSlotDesc.setType(Type.INT);
+            context.addSlotToDictSlot(slotDesc.getId().asInt(), newSlotDesc.getId().asInt());
         }
     }
 }

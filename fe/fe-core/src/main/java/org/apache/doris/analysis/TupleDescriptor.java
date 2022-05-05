@@ -374,7 +374,7 @@ public class TupleDescriptor {
     }
 
     public void updateSlotType(int offset, Type type) {
-        slots.get(offset).setType(type);
+        SlotDescriptor slotDesc = slots.get(offset);
     }
 
     public String getExplainString() {

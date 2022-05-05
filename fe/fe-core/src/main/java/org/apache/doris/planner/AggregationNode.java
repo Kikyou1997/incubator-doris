@@ -24,8 +24,14 @@ import org.apache.doris.analysis.AggregateInfo;
 import org.apache.doris.analysis.Analyzer;
 import org.apache.doris.analysis.Expr;
 import org.apache.doris.analysis.FunctionCallExpr;
+import org.apache.doris.analysis.FunctionParams;
+import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.SlotId;
 import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleDescriptor;
+import org.apache.doris.catalog.Column;
+import org.apache.doris.catalog.FunctionSet;
+import org.apache.doris.catalog.Type;
 import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.VectorizedUtil;
@@ -44,7 +50,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -61,6 +66,9 @@ public class AggregationNode extends PlanNode {
 
     // If true, use streaming preaggregation algorithm. Not valid if this is a merge agg.
     private boolean useStreamingPreagg;
+
+    private static Set<String> dictAggregationSupportedFunction = Sets.newHashSet(
+        FunctionSet.COUNT, FunctionSet.MAX, FunctionSet.MIN);
 
     /**
      * Create an agg node that is not an intermediate node.
@@ -361,5 +369,52 @@ public class AggregationNode extends PlanNode {
             SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
         });
         super.filterDictSlot(context);
+    }
+
+    @Override
+    public void updateSlots(PlanContext context) {
+        if (!context.isEncoded()) {
+            return;
+        }
+        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
+        for (Expr expr : aggInfo.getGroupingExprs()) {
+            if (expr instanceof SlotRef) {
+                SlotRef slotRef = (SlotRef) expr;
+                Column column = slotRef.getColumn();
+                // means it's not a colRef
+                if (column == null) {
+                    continue;
+                }
+                int slotId = slotRef.getSlotId().asInt();
+                if (!dictCodableSlot.contains(slotId)) {
+                    continue;
+                }
+                context.updateSlotRefType(slotRef);
+            }
+        }
+
+        for(FunctionCallExpr func : aggInfo.getAggregateExprs()) {
+            String funcName = func.getFnName().getFunction();
+            if (!dictAggregationSupportedFunction.contains(funcName)) {
+                continue;
+            }
+            FunctionParams functionParams = func.getParams();
+            List<Expr> funcParamExprList = functionParams.exprs();
+            for (Expr expr : funcParamExprList) {
+                if (expr instanceof SlotRef) {
+                    SlotRef slotRef = (SlotRef) expr;
+                    Column column = slotRef.getColumn();
+                    // means it's not a colRef
+                    if (column == null) {
+                        continue;
+                    }
+                    int slotId = slotRef.getSlotId().asInt();
+                    if (!dictCodableSlot.contains(slotId)) {
+                        continue;
+                    }
+                    context.updateSlotRefType(slotRef);
+                }
+            }
+        }
     }
 }

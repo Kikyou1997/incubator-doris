@@ -974,6 +974,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
     public void filterDictSlot(PlanContext context) {
         Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
         Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
+        // TODO: some predicate could also be optimized by global dict, we will support it in the future
         conjuncts.forEach(e -> {
             int srcSlotId = e.getSrcSlotRef().getId().asInt();
             if (dictCodableSlot.contains(srcSlotId)) {
@@ -982,5 +983,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         });
         dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
     }
+
+    public void updateSlots(PlanContext context) {}
 
 }
