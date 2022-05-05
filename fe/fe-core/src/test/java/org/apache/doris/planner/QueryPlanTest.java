@@ -2179,4 +2179,18 @@ public class QueryPlanTest {
 
     }
 
+    @Test
+    public void testInsertDecodeNode() throws Exception {
+        connectContext.setDatabase("default_cluster:test");
+        createTable("CREATE TABLE d_t (k1 int, v1 varchar, v2 varchar)\n" +
+            "DISTRIBUTED BY HASH(k1)\n" +
+            "BUCKETS 3\n" +
+            "PROPERTIES(\n" +
+            "    \"replication_num\"=\"1\"\n" +
+            ");");
+        String sql = "SELECT v2 FROM d_t GROUP BY v2";
+        String plan = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql);
+        Assert.assertTrue(plan.contains("Decode"));
+
+    }
 }

@@ -28,10 +28,8 @@ import org.apache.doris.analysis.FunctionParams;
 import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.SlotId;
 import org.apache.doris.analysis.SlotRef;
-import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
-import org.apache.doris.catalog.Type;
 import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.VectorizedUtil;
@@ -50,8 +48,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Aggregation computation.
@@ -366,14 +366,21 @@ public class AggregationNode extends PlanNode {
         List<Expr> groupingExpr = aggInfo.getGroupingExprs();
         // we should support some scalar functions in the future, such as lower upper sub_str e.g.
         groupingExpr.forEach(e -> {
-            SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
+            if (!(e instanceof SlotRef)) {
+                SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
+                return;
+            }
+            SlotRef slotRef = (SlotRef) e;
+            if (slotRef.getColumn() == null) {
+                SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
+            }
         });
         super.filterDictSlot(context);
     }
 
     @Override
     public void updateSlots(PlanContext context) {
-        if (!context.isEncoded()) {
+        if (!context.isCouldEncoded()) {
             return;
         }
         Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
@@ -416,5 +423,23 @@ public class AggregationNode extends PlanNode {
                 }
             }
         }
+    }
+
+    @Override
+    public void generateDecodeNode(PlanContext planContext) {
+        Set<Integer> originSlotIdSet = planContext.getOriginSlotSet();
+        Set<Integer> originSlotInOutput =
+            aggInfo.getOutputTupleDesc().getSlots()
+                .stream()
+                .map(SlotDescriptor::getSourceExprs)
+                .flatMap(Collection::stream)
+                .filter(e -> e instanceof SlotRef)
+                .map(e -> ((SlotRef) e).getSlotId().asInt())
+                .filter(originSlotIdSet::contains)
+                .collect(Collectors.toSet());
+        if (originSlotInOutput.isEmpty()) {
+           return;
+        }
+        planContext.newDecodeNode(this, originSlotInOutput, tupleIds);
     }
 }

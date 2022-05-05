@@ -9,12 +9,15 @@ import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.Type;
 import org.apache.doris.statistics.ColumnDict;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class PlanContext {
+
     private Map<Long, Set<Integer>> tableIdToDictCodableSlotSet = new HashMap<>();
 
     private Map<Integer, ColumnDict> slotIdToColumnDict = new HashMap<>();
@@ -22,7 +25,8 @@ public class PlanContext {
     private Map<Integer, Integer> slotIdToDictSlotId = new HashMap<>();
 
     private Map<Integer, Integer> tupleIdToNewTupleWithDictSlot = new HashMap<>();
-    private boolean encoded;
+
+    private boolean couldEncoded;
 
     private Set<Integer> dictOptimizationDisabledSlot = new HashSet<>();
 
@@ -30,7 +34,12 @@ public class PlanContext {
 
     private DescriptorTable tableDescriptor;
 
-    public PlanContext(DescriptorTable tableDescriptor) {
+    private PlannerContext ctx_;
+
+    private Map<PlanNode, DecodeNode> childToDecodeNode = new HashMap<>();
+
+    public PlanContext(PlannerContext ctx_, DescriptorTable tableDescriptor) {
+        this.ctx_ = ctx_;
         this.tableDescriptor = tableDescriptor;
     }
 
@@ -44,6 +53,10 @@ public class PlanContext {
         slotIdToColumnDict.put(slotId, dict);
     }
 
+    public Set<Integer> getOriginSlotSet() {
+        return slotIdToColumnDict.keySet();
+    }
+
     public Set<Integer> getAllDictCodableSlot() {
         return dictCodableSlotSet;
     }
@@ -52,16 +65,22 @@ public class PlanContext {
         return dictOptimizationDisabledSlot;
     }
 
-    public boolean isEncoded() {
-        return encoded;
+    public boolean isCouldEncoded() {
+        return couldEncoded;
     }
 
-    public void setEncoded(boolean encoded) {
-        this.encoded = encoded;
+    public void setCouldEncoded(boolean couldEncoded) {
+        this.couldEncoded = couldEncoded;
     }
 
     public TupleDescriptor generateTupleDesc(TupleId src) {
-       TupleDescriptor tupleDesc = tableDescriptor.copyTupleDescriptor(src, "tuple-with-dict-slots");
+        TupleDescriptor originTupleDesc = tableDescriptor.getTupleDesc(src);
+        TupleDescriptor tupleDesc = tableDescriptor.copyTupleDescriptor(src, "tuple-with-dict-slots");
+        tupleDesc.setTable(originTupleDesc.getTable());
+        tupleDesc.setRef(originTupleDesc.getRef());
+        tupleDesc.setAliases(originTupleDesc.getAliases_(), originTupleDesc.hasExplicitAlias());
+        tupleDesc.setCardinality(originTupleDesc.getCardinality());
+        tupleDesc.setIsMaterialized(originTupleDesc.getIsMaterialized());
         tupleIdToNewTupleWithDictSlot.put(src.asInt(), tupleDesc.getId().asInt());
         return tupleDesc;
     }
@@ -82,4 +101,22 @@ public class PlanContext {
         slotRef.setType(Type.INT);
     }
 
+    public DecodeNode newDecodeNode(PlanNode child, Set<Integer> originSlotIdSet, ArrayList<TupleId> output) {
+        Map<Integer, Integer> slotIdToDictId = new HashMap<>();
+        for (Integer originSlotId : originSlotIdSet) {
+            Integer dictSlotId = slotIdToDictSlotId.get(originSlotId);
+            slotIdToDictId.put(originSlotId, dictSlotId);
+        }
+        DecodeNode decodeNode =  new DecodeNode(ctx_.getNextNodeId(), child, slotIdToDictId, output);
+        childToDecodeNode.put(child, decodeNode);
+        return decodeNode;
+    }
+
+    public Map<PlanNode, DecodeNode> getChildToDecodeNode() {
+        return childToDecodeNode;
+    }
+
+    public void addSlotToDictIntoDescTbl(int slotId) {
+        tableDescriptor.putDict(slotId, slotIdToColumnDict.get(slotId));
+    }
 }

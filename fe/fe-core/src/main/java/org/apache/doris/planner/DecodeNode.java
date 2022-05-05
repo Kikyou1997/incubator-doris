@@ -34,12 +34,13 @@
 
 package org.apache.doris.planner;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.StringJoiner;
-import org.apache.doris.analysis.Analyzer;
+
 import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.TupleId;
 import org.apache.doris.thrift.TDecodeNode;
 import org.apache.doris.thrift.TExplainLevel;
 import org.apache.doris.thrift.TPlanNode;
@@ -47,17 +48,22 @@ import org.apache.doris.thrift.TPlanNodeType;
 
 public class DecodeNode extends PlanNode {
     private Map<Integer, Integer> slotIdToDictId = new HashMap();
-    private Analyzer analyzer;
 
-    protected DecodeNode(PlanNodeId id, PlanNode child, String planNodeName, Analyzer analyzer) {
-        super(id, planNodeName);
+    private static final String NAME = "Decode Node";
+
+    public DecodeNode(PlanNodeId id, PlanNode child, Map<Integer, Integer> slotIdToDictId, ArrayList<TupleId> tupleIdList) {
+        super(id, tupleIdList, NAME);
         this.addChild(child);
         this.tblRefIds = child.tblRefIds;
-        this.analyzer = analyzer;
+        this.slotIdToDictId = slotIdToDictId;
     }
 
     public void addDecodingNeededSlots(SlotId slotId, int dictId) {
         this.slotIdToDictId.put(slotId.asInt(), dictId);
+    }
+
+    public void setSlotIdToDictId(Map<Integer, Integer> slotIdToDictId) {
+        this.slotIdToDictId = slotIdToDictId;
     }
 
     protected void toThrift(TPlanNode msg) {
@@ -68,10 +74,8 @@ public class DecodeNode extends PlanNode {
     public String getNodeExplainString(String prefix, TExplainLevel detailLevel) {
         StringBuilder output = new StringBuilder(prefix);
         StringJoiner dictColInfo = new StringJoiner(", ", "Decode col: ", "");
-        Iterator var5 = this.slotIdToDictId.entrySet().iterator();
 
-        while(var5.hasNext()) {
-            Map.Entry<Integer, Integer> entry = (Map.Entry)var5.next();
+        for (Map.Entry<Integer, Integer> entry : this.slotIdToDictId.entrySet()) {
             dictColInfo.add(String.format("<%s, %s>", entry.getKey(), entry.getValue()));
         }
 

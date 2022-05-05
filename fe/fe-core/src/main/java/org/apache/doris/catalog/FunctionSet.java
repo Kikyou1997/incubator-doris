@@ -1314,7 +1314,6 @@ public class FunctionSet<min_initIN9doris_udf12DecimalV2ValEEEvPNS2_15FunctionCo
     }
 
 
-    public static final String COUNT = "count";
     public static final String WINDOW_FUNNEL = "window_funnel";
 
     public static final String GLOBAL_DICT = "global_dict";

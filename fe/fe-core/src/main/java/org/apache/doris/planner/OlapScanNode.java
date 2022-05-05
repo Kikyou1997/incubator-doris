@@ -782,6 +782,7 @@ public class OlapScanNode extends ScanNode {
             msg.olap_scan_node.setSortColumn(sortColumn);
         }
         msg.olap_scan_node.setKeyType(olapTable.getKeysType().toThrift());
+        msg.olap_scan_node.dict_applied_slot = dictAppliedSlotList;
     }
 
     // export some tablets
@@ -955,21 +956,24 @@ public class OlapScanNode extends ScanNode {
     @Override
     public void updateSlots(PlanContext context) {
         List<SlotDescriptor> slotDescriptorList = desc.getSlots();
-        Set<SlotDescriptor> slotSet = slotDescriptorList
+        List<SlotDescriptor> slotSet = slotDescriptorList
             .stream()
             .filter(d -> context.getAllDictCodableSlot().contains(d.getId().asInt()))
-            .collect(Collectors.toSet());
+            .collect(Collectors.toList());
 
         if (slotSet.size() > 0) {
-            context.setEncoded(true);
+            context.setCouldEncoded(true);
         }
 
         desc = context.generateTupleDesc(desc.getId());
         List<SlotDescriptor> newSlotDescList = desc.getSlots();
         for (SlotDescriptor slotDesc : slotSet) {
             SlotDescriptor newSlotDesc =  newSlotDescList.get(slotDesc.getSlotOffset());
+            dictAppliedSlotList.add(newSlotDesc.getId().asInt());
             newSlotDesc.setType(Type.INT);
-            context.addSlotToDictSlot(slotDesc.getId().asInt(), newSlotDesc.getId().asInt());
+            int slotId = slotDesc.getId().asInt();
+            context.addSlotToDictSlot(slotId, newSlotDesc.getId().asInt());
+            context.addSlotToDictIntoDescTbl(slotId);
         }
     }
 }

@@ -167,6 +167,11 @@ public class TupleDescriptor {
     }
     public boolean hasExplicitAlias() { return hasExplicitAlias_; }
     public String getAlias() { return (aliases_ != null) ? aliases_[0] : null; }
+
+    public String[] getAliases_() {
+        return aliases_;
+    }
+
     public TableName getAliasAsName() {
         return (aliases_ != null) ? new TableName(null, aliases_[0]) : null;
     }

@@ -986,4 +986,8 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
 
     public void updateSlots(PlanContext context) {}
 
+    public boolean shouldDecode(PlanContext planContext) { return false;}
+
+    public void generateDecodeNode(PlanContext planContext) {}
+
 }
