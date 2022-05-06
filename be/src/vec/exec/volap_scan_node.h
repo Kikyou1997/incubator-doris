@@ -39,6 +39,7 @@ public:
     }
     Status get_next(RuntimeState* state, Block* block, bool* eos) override;
     Status close(RuntimeState* state) override;
+    Status get_dict_data(RuntimeState* state, std::set<std::string>& dict_words);
 
 private:
     void transfer_thread(RuntimeState* state);

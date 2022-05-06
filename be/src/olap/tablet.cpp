@@ -35,6 +35,7 @@
 #include "olap/reader.h"
 #include "olap/row_cursor.h"
 #include "olap/rowset/rowset.h"
+#include "olap/rowset/beta_rowset.h"
 #include "olap/rowset/rowset_factory.h"
 #include "olap/rowset/rowset_meta_manager.h"
 #include "olap/storage_engine.h"
@@ -1441,6 +1442,18 @@ void Tablet::reset_compaction(CompactionType compaction_type) {
     } else {
         _base_compaction.reset();
     }
+}
+
+Status Tablet::get_dict_data(std::set<std::string>& dict_words, int col_id){
+    for( auto entry: _rs_version_map)
+    {
+        auto rowset_ptr = dynamic_cast<BetaRowset*>(entry.second.get());
+        //skip delete rowset and empty rowset
+        if (nullptr != rowset_ptr && !rowset_ptr->delete_flag() && rowset_ptr->num_rows() > 0){
+            RETURN_IF_ERROR(rowset_ptr->get_dict_data(dict_words, col_id));
+        }
+    }
+    return  Status::OK();
 }
 
 } // namespace doris

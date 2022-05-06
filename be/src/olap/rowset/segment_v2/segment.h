@@ -100,7 +100,7 @@ public:
 
     // only used by UT
     const SegmentFooterPB& footer() const { return _footer; }
-
+    Status get_dict_data(std::set<string>& dict_words, int col_id);
 private:
     DISALLOW_COPY_AND_ASSIGN(Segment);
     Segment(const FilePathDesc& path_desc, uint32_t segment_id, const TabletSchema* tablet_schema);

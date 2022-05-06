@@ -83,4 +83,10 @@ Status VOlapScanner::get_block(RuntimeState* state, vectorized::Block* block, bo
 void VOlapScanner::set_tablet_reader() {
     _tablet_reader = std::make_unique<BlockReader>();
 }
+
+Status VOlapScanner::get_dict_data(std::set<std::string>& dict_words){
+    assert(_tablet_reader_params.return_columns.size()==1);
+    return _tablet->get_dict_data(dict_words, _tablet_reader_params.return_columns[0]);
+}
+
 } // namespace doris::vectorized

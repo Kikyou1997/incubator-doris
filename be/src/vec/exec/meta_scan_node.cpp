@@ -16,6 +16,7 @@
 // under the License.
 
 #include "vec/exec/meta_scan_node.h"
+#include "vec/exec/volap_scan_node.h"
 namespace doris::vectorized {
 
     MetaScanNode::MetaScanNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs)
@@ -25,12 +26,26 @@ namespace doris::vectorized {
         _tuple_desc(nullptr),
         _slot_to_dict(tnode.meta_scan_node.slot_to_dict)
     {
-        //TODO
+        
+        _inner_tnode.olap_scan_node.__set_tuple_id(tnode.meta_scan_node.tuple_id);
+        _inner_tnode.olap_scan_node.__set_is_preaggregation(tnode.meta_scan_node.is_preaggregation);
+        _inner_tnode.olap_scan_node.__set_sort_column(tnode.meta_scan_node.sort_column);
+        _inner_tnode.olap_scan_node.__set_table_name(tnode.meta_scan_node.table_name);
+        _inner_tnode.olap_scan_node.__set_key_column_name(tnode.meta_scan_node.key_column_name);
+        _inner_tnode.olap_scan_node.__set_key_column_type(tnode.meta_scan_node.key_column_type);
+        _inner_scan_node = std::make_unique<VOlapScanNode>(pool, _inner_tnode, descs);
     }
     
     Status MetaScanNode::get_next(RuntimeState* state, Block* block, bool* eos) {
-        //TODO
-        return Status::OK();
+        return _inner_scan_node->get_next(state, block, eos);
     }
-
+    Status MetaScanNode::init(const TPlanNode& tnode, RuntimeState* state){
+        return _inner_scan_node->init(_inner_tnode, state);
+    }
+    Status MetaScanNode::prepare(RuntimeState* state) {
+        return _inner_scan_node->prepare(state);
+    }
+    Status MetaScanNode::open(RuntimeState* state){
+        return _inner_scan_node->open(state);
+    }
 }
