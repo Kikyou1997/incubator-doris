@@ -24,7 +24,7 @@ namespace doris {
 namespace vectorized {
 class GlobalDict : public Dict<int> {
 public:
-    GlobalDict(const std::vector<std::string>& data) : Dict(data) {};
+    GlobalDict(const std::vector<std::string>& data);
 
     //string column to int column
     bool encode(ColumnWithTypeAndName& col);

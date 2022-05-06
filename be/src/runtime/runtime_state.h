@@ -366,7 +366,7 @@ public:
 
     void set_global_dicts(TGlobalDict tglobal_dict);
 
-    vectorized::GlobalDictSPtr get_global_dict(int dict_id);
+    vectorized::GlobalDictSPtr get_global_dict(int slot_id);
 private:
     // Use a custom block manager for the query for testing purposes.
     void set_block_mgr2(const std::shared_ptr<BufferedBlockMgr2>& block_mgr) {
