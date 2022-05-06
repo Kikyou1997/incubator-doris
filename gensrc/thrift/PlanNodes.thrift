@@ -52,7 +52,7 @@ enum TPlanNodeType {
   EXCEPT_NODE,
   ODBC_SCAN_NODE,
   TABLE_FUNCTION_NODE,
-  DECODE_NODE,
+  DECODE_NODE
 }
 
 // phases of an execution node
