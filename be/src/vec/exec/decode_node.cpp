@@ -18,19 +18,45 @@
 #include "vec/exec/decode_node.h"
 namespace doris::vectorized {
 
-    DecodeNode::DecodeNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs)
-    :ExecNode(pool, tnode, descs),
-        _tuple_id(tnode.decode_node.tuple_id),
-        _decode_node(tnode.decode_node),
-        _tuple_desc(nullptr),
-        _slot_to_dict(tnode.meta_scan_node.slot_to_dict)
-    {
-        //TODO
-    }
-    
-    Status DecodeNode::get_next(RuntimeState* state, Block* block, bool* eos) {
-        //TODO
-        return Status::OK();
+DecodeNode::DecodeNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs)
+        : ExecNode(pool, tnode, descs),
+          _tuple_id(tnode.decode_node.tuple_id),
+          _decode_node(tnode.decode_node),
+          _slot_to_dict(tnode.meta_scan_node.slot_to_dict) {
+    _tuple_desc = descs.get_tuple_descriptor(_tuple_id);
+    assert(_tuple_desc);
+}
+
+Status DecodeNode::init(const TPlanNode& tnode, RuntimeState* state) {
+    assert(state);
+    RETURN_IF_ERROR(ExecNode::init(tnode, state));
+    for (const auto& item : _decode_node.slot_to_dict) {
+        _dicts.emplace(item.first, state->get_global_dict(item.first));
     }
 
+    for (const auto& slot : _slot_to_dict) {
+        int pos = 0;
+        for (const auto& slot_desc : _tuple_desc->slots()) {
+            if (slot.first == slot_desc->id()) {
+                _slot_to_pos.insert({slot.first, pos});
+                break;
+            }
+            ++pos;
+        }
+    }
+    return Status::OK();
 }
+
+Status DecodeNode::get_next(RuntimeState* state, Block* block, bool* eos) {
+    for (const auto& slot : _slot_to_pos) {
+        const auto it = _dicts.find(slot.first);
+        assert(it != _dicts.end());
+        assert(slot.second < block->columns());
+        if (!it->second->decode(block->get_by_position(slot.second))) {
+            return Status::Aborted("Decode dict encoded column failed");
+        }
+    }
+    return Status::OK();
+}
+
+} // namespace doris::vectorized

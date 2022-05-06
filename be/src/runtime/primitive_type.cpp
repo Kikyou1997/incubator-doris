@@ -102,6 +102,15 @@ PrimitiveType thrift_to_type(TPrimitiveType::type ttype) {
     case TPrimitiveType::ARRAY:
         return TYPE_ARRAY;
 
+    case TPrimitiveType::DICT_UINT8:
+        return TYPE_DICT_UINT8;
+    
+    case TPrimitiveType::DICT_UINT16:
+        return TYPE_DICT_UINT16;
+
+    case TPrimitiveType::DICT_UINT32:
+        return TYPE_DICT_UINT32;
+
     default:
         return INVALID_TYPE;
     }
@@ -174,6 +183,15 @@ TPrimitiveType::type to_thrift(PrimitiveType ptype) {
 
     case TYPE_ARRAY:
         return TPrimitiveType::ARRAY;
+
+    case TYPE_DICT_UINT8:
+        return TPrimitiveType::DICT_UINT8;
+
+    case TYPE_DICT_UINT16:
+        return TPrimitiveType::DICT_UINT16;
+
+    case TYPE_DICT_UINT32:
+        return TPrimitiveType::DICT_UINT32;
 
     default:
         return TPrimitiveType::INVALID_TYPE;
@@ -248,6 +266,15 @@ std::string type_to_string(PrimitiveType t) {
     case TYPE_ARRAY:
         return "ARRAY";
 
+    case TYPE_DICT_UINT8:
+        return "dict_uint8";
+
+    case TYPE_DICT_UINT16:
+        return "dict_uint16";
+
+    case TYPE_DICT_UINT32:
+        return "dict_uint32";
+
     default:
         return "";
     };
@@ -315,8 +342,18 @@ std::string type_to_odbc_string(PrimitiveType t) {
 
     case TYPE_OBJECT:
         return "object";
+
     case TYPE_QUANTILE_STATE:
         return "quantile_state";
+
+    case TYPE_DICT_UINT8:
+        return "dict_uint8";
+
+    case TYPE_DICT_UINT16:
+        return "dict_uint16";
+
+    case TYPE_DICT_UINT32:
+        return "dict_uint32";
     };
 
     return "unknown";
@@ -368,13 +405,16 @@ int get_slot_size(PrimitiveType type) {
     case TYPE_NULL:
     case TYPE_BOOLEAN:
     case TYPE_TINYINT:
+    case TYPE_DICT_UINT8:
         return 1;
 
     case TYPE_SMALLINT:
+    case TYPE_DICT_UINT16:
         return 2;
 
     case TYPE_INT:
     case TYPE_FLOAT:
+    case TYPE_DICT_UINT32:
         return 4;
 
     case TYPE_BIGINT:

@@ -83,6 +83,9 @@ enum TPrimitiveType {
   STRING,
   ALL,
   QUANTILE_STATE,
+  DICT_UINT8,
+  DICT_UINT16,
+  DICT_UINT32
 }
 
 enum TTypeNodeType {
