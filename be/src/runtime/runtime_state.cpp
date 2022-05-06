@@ -476,9 +476,9 @@ void RuntimeState::set_global_dicts(TGlobalDict tglobal_dict){
     }
 }
 
-vectorized::GlobalDictSPtr RuntimeState::get_global_dict(int dict_id){
-    assert(_global_dict_map.find(dict_id) != _global_dict_map.end());
-    return _global_dict_map[dict_id];
+vectorized::GlobalDictSPtr RuntimeState::get_global_dict(int slot_id){
+    assert(_global_dict_map.find(slot_id) != _global_dict_map.end());
+    return _global_dict_map[slot_id];
 }
 
 } // end namespace doris

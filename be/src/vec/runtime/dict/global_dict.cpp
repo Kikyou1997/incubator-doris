@@ -24,6 +24,13 @@
 
 namespace doris::vectorized {
 
+GlobalDict::GlobalDict(const std::vector<std::string>& data) : Dict(data) {
+    for (const auto& val : data) {
+        StringValue v {val.data(), (int)val.size()};
+        insert_value(v);
+    }
+}
+
 bool GlobalDict::encode(ColumnWithTypeAndName& col) {
     assert(col.column && col.type);
     size_t cardin = cardinality();
