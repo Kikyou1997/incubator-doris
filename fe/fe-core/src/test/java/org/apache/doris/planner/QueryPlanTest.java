@@ -2154,6 +2154,7 @@ public class QueryPlanTest {
 
     }
 
+    @Test
     public void testMetaQuery() throws Exception {
         connectContext.setDatabase("default_cluster:test");
         createTable("CREATE TABLE meta_scan_test (v1 int, v2 varchar)\n" +

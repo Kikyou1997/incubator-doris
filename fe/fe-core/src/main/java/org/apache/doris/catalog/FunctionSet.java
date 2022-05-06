@@ -1378,6 +1378,11 @@ public class FunctionSet<min_initIN9doris_udf12DecimalV2ValEEEvPNS2_15FunctionCo
 
         addBuiltin(AggregateFunction.createBuiltin(FunctionSet.GLOBAL_DICT,
                 Lists.newArrayList(Type.VARCHAR), Type.VARCHAR, Type.VARCHAR,
+                true, false, false, false, true
+            ));
+
+        addBuiltin(AggregateFunction.createBuiltin(FunctionSet.GLOBAL_DICT,
+                Lists.newArrayList(Type.VARCHAR), Type.VARCHAR, Type.VARCHAR,
                 true, false, false, false
             ));
 
