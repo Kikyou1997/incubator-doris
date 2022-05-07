@@ -50,6 +50,7 @@ struct ColumnWriterOptions {
     bool need_zone_map = false;
     bool need_bitmap_index = false;
     bool need_bloom_filter = false;
+    const phmap::flat_hash_set<std::string>* dict = nullptr;
     std::string to_string() {
         std::stringstream ss;
         ss << std::boolalpha << "meta=" << meta->DebugString()
@@ -136,6 +137,8 @@ public:
     // used for append not null data. When page is full, will append data not reach num_rows.
     virtual Status append_data_in_current_page(const uint8_t* ptr, size_t* num_rows) = 0;
 
+    virtual bool is_global_dict_valid() { return true; }
+
     bool is_nullable() const { return _is_nullable; }
 
     Field* get_field() const { return _field.get(); }
@@ -190,6 +193,8 @@ public:
 
     Status append_data_in_current_page(const uint8_t** ptr, size_t* num_rows) override;
     Status append_data_in_current_page(const uint8_t* ptr, size_t* num_rows) override;
+
+    bool is_global_dict_valid() override;
 
 private:
     std::unique_ptr<PageBuilder> _page_builder;

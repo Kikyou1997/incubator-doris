@@ -71,6 +71,8 @@ public:
 
     Status get_last_value(void* value) const override;
 
+    bool is_valid_global_dict() const override { return _is_global_dict_valid; }
+
 private:
     PageBuilderOptions _options;
     bool _finished;
@@ -93,6 +95,8 @@ private:
     MemPool _pool;
     faststring _buffer;
     faststring _first_value;
+    bool _is_global_dict_valid = true;
+    const phmap::flat_hash_set<std::string>* _dict = nullptr;
 };
 
 class BinaryDictPageDecoder : public PageDecoder {

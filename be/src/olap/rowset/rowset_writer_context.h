@@ -71,6 +71,8 @@ struct RowsetWriterContext {
     // ATTN: not support for RowsetConvertor.
     // (because it hard to refactor, and RowsetConvertor will be deprecated in future)
     DataDir* data_dir = nullptr;
+
+    const phmap::flat_hash_map<std::string, phmap::flat_hash_set<std::string>>* dicts = nullptr;
 };
 
 } // namespace doris

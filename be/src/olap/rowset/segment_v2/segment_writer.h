@@ -55,6 +55,7 @@ extern const uint32_t k_segment_magic_length;
 
 struct SegmentWriterOptions {
     uint32_t num_rows_per_block = 1024;
+    const phmap::flat_hash_map<std::string, phmap::flat_hash_set<std::string>>* dicts = nullptr;
 };
 
 class SegmentWriter {
@@ -81,6 +82,8 @@ public:
 
     static void init_column_meta(ColumnMetaPB* meta, uint32_t* column_id,
                                  const TabletColumn& column);
+
+    const phmap::flat_hash_set<std::string>& get_invalid_dict_column_names() const;
 
 private:
     DISALLOW_COPY_AND_ASSIGN(SegmentWriter);
@@ -116,6 +119,7 @@ private:
     std::vector<const KeyCoder*> _short_key_coders;
     std::vector<uint16_t> _short_key_index_size;
     size_t _short_key_row_pos = 0;
+    phmap::flat_hash_set<std::string> _invalid_dict_column_names;
 };
 
 } // namespace segment_v2

@@ -18,6 +18,7 @@
 #pragma once
 
 #include <cstddef>
+#include <parallel_hashmap/phmap.h>
 
 namespace doris {
 namespace segment_v2 {
@@ -30,6 +31,8 @@ struct PageBuilderOptions {
     size_t data_page_size = DEFAULT_PAGE_SIZE;
 
     size_t dict_page_size = DEFAULT_PAGE_SIZE;
+
+    const phmap::flat_hash_set<std::string>* dict = nullptr;
 };
 
 struct PageDecoderOptions {};

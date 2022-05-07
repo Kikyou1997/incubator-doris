@@ -101,6 +101,14 @@ Status SegmentWriter::init(uint32_t write_mbytes_per_sec __attribute__((unused))
             }
         }
 
+        if (column.type() == FieldType::OLAP_FIELD_TYPE_CHAR && column.type() != FieldType::OLAP_FIELD_TYPE_VARCHAR,
+            _opts.dicts != nullptr) {
+            auto iter = _opts.dicts->find(column.name().data());
+            if (iter != _opts.dicts->end()) {
+                opts.dict = &iter->second;
+            }
+        }
+
         std::unique_ptr<ColumnWriter> writer;
         RETURN_IF_ERROR(ColumnWriter::create(opts, &column, _wblock, &writer));
         RETURN_IF_ERROR(writer->init());
@@ -246,6 +254,14 @@ Status SegmentWriter::finalize(uint64_t* segment_file_size, uint64_t* index_size
     RETURN_IF_ERROR(_write_footer());
     RETURN_IF_ERROR(_wblock->finalize());
     *segment_file_size = _wblock->bytes_appended();
+    size_t index = 0;
+    for (const auto& column_writer : _column_writers) {
+        if (!column_writer->is_global_dict_valid()) {
+            _invalid_dict_column_names.emplace(_tablet_schema->columns()[index].name().data(),
+                                               _tablet_schema->columns()[index].name().size());
+            ++index;
+        }
+    }
     return Status::OK();
 }
 
@@ -323,6 +339,10 @@ Status SegmentWriter::_write_footer() {
 Status SegmentWriter::_write_raw_data(const std::vector<Slice>& slices) {
     RETURN_IF_ERROR(_wblock->appendv(&slices[0], slices.size()));
     return Status::OK();
+}
+
+const phmap::flat_hash_set<std::string>& SegmentWriter::get_invalid_dict_column_names() const {
+    return _invalid_dict_column_names;
 }
 
 } // namespace segment_v2

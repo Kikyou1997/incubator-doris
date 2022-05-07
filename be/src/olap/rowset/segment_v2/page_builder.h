@@ -85,6 +85,8 @@ public:
     // Status::NotFound if no values have been added.
     virtual Status get_last_value(void* value) const = 0;
 
+    virtual bool is_valid_global_dict() const { return true; }
+
 private:
     DISALLOW_COPY_AND_ASSIGN(PageBuilder);
 };

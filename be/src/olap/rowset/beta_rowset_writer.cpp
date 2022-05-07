@@ -94,6 +94,8 @@ Status BetaRowsetWriter::init(const RowsetWriterContext& rowset_writer_context) 
     }
     _rowset_meta->set_tablet_uid(_context.tablet_uid);
 
+    _writer_options.dicts = _context.dicts;
+
     return Status::OK();
 }
 
@@ -304,10 +306,9 @@ Status BetaRowsetWriter::_create_segment_writer(
     }
 
     DCHECK(wblock != nullptr);
-    segment_v2::SegmentWriterOptions writer_options;
     writer->reset(new segment_v2::SegmentWriter(wblock.get(), _num_segment, _context.tablet_schema,
                                                 _context.data_dir, _context.max_rows_per_segment,
-                                                writer_options));
+                                                _writer_options));
     {
         std::lock_guard<SpinLock> l(_lock);
         _wblocks.push_back(std::move(wblock));
@@ -335,6 +336,12 @@ Status BetaRowsetWriter::_flush_segment_writer(std::unique_ptr<segment_v2::Segme
     }
     _total_data_size += segment_size;
     _total_index_size += index_size;
+
+    const auto& invalid_dict_column_names = (*writer)->get_invalid_dict_column_names();
+    for (const auto& name : invalid_dict_column_names) {
+        _invalid_dict_column_names.insert(name);
+    }
+
     writer->reset();
     return Status::OK();
 }

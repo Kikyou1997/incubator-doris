@@ -133,6 +133,7 @@ Status DeltaWriter::init() {
     writer_context.load_id = _req.load_id;
     writer_context.segments_overlap = OVERLAPPING;
     writer_context.data_dir = _tablet->data_dir();
+    writer_context.dicts = _req.dicts;
     RETURN_NOT_OK(RowsetFactory::create_rowset_writer(writer_context, &_rowset_writer));
 
     _tablet_schema = &(_tablet->tablet_schema());
@@ -342,6 +343,10 @@ Status DeltaWriter::close_wait(google::protobuf::RepeatedPtrField<PTabletInfo>* 
         PTabletInfo* tablet_info = tablet_vec->Add();
         tablet_info->set_tablet_id(_tablet->tablet_id());
         tablet_info->set_schema_hash(_tablet->schema_hash());
+        const auto& invalid_dict_column_names = _rowset_writer->get_invalid_dict_column_names();
+        for (auto& item : invalid_dict_column_names) {
+            tablet_info->add_invalid_dict_cols(item);
+        }
     }
 #endif
 

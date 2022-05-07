@@ -481,4 +481,13 @@ vectorized::GlobalDictSPtr RuntimeState::get_global_dict(int slot_id){
     return _global_dict_map[slot_id];
 }
 
+vectorized::GlobalDictSPtr RuntimeState::find_global_dict(int slot_id) {
+    auto it = _global_dict_map.find(slot_id);
+    if (it != _global_dict_map.end()) {
+        assert(it->second);
+        return it->second;
+    }
+    return nullptr;
+}
+
 } // end namespace doris

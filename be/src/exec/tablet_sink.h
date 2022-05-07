@@ -304,6 +304,8 @@ protected:
     std::mutex _closed_lock;
     bool _is_closed = false;
 
+    RuntimeState* _runtime_state = nullptr;
+
 private:
     // buffer for saving serialized row batch data.
     // In the non-attachment approach, we need to use two PRowBatch structures alternately

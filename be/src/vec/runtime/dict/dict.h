@@ -114,9 +114,11 @@ public:
 
     size_t byte_size() { return _dict_data.size() * sizeof(_dict_data[0]); }
 
+    size_t dict_value_num() const { return _dict_data.size(); }
+
 protected:
     size_t cardinality() { 
-        //always use int32_t for now.
+        //always use uint32_t for now.
         return UINT32_MAX - 1;
         //return _dict_data.size(); 
     }

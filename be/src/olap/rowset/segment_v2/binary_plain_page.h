@@ -47,7 +47,7 @@ namespace segment_v2 {
 class BinaryPlainPageBuilder : public PageBuilder {
 public:
     BinaryPlainPageBuilder(const PageBuilderOptions& options)
-            : _size_estimate(0), _prepared_size(0), _options(options) {
+            : _size_estimate(0), _prepared_size(0), _options(options), _dict(options.dict) {
         reset();
     }
 
@@ -75,6 +75,10 @@ public:
 
             i++;
             vals += sizeof(Slice);
+
+            if (_dict && _is_global_dict_valid) {
+                _is_global_dict_valid = _dict->find({src->data, src->size}) != _dict->end();
+            }
         }
 
         *count = i;
@@ -132,6 +136,8 @@ public:
         _prepared_size += sizeof(uint32_t);
     }
 
+    bool is_valid_global_dict() const override { return _is_global_dict_valid; }
+
 private:
     void _copy_value_at(size_t idx, faststring* value) const {
         size_t value_size =
@@ -150,6 +156,8 @@ private:
     uint32_t _last_value_size = 0;
     faststring _first_value;
     faststring _last_value;
+    bool _is_global_dict_valid = true;
+    const phmap::flat_hash_set<std::string>* _dict = nullptr;
 };
 
 class BinaryPlainPageDecoder : public PageDecoder {

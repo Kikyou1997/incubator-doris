@@ -47,6 +47,7 @@ struct WriteRequest {
     // slots are in order of tablet's schema
     const std::vector<SlotDescriptor*>* slots;
     bool is_high_priority = false;
+    const phmap::flat_hash_map<std::string, phmap::flat_hash_set<std::string>>* dicts = nullptr;
 };
 
 // Writer for a particular (load, index, tablet).

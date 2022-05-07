@@ -206,6 +206,18 @@ Status TabletsChannel::_open_all_writers(const PTabletWriterOpenRequest& request
         ss << "unknown index id, key=" << _key;
         return Status::InternalError(ss.str());
     }
+
+    for (auto& slot : request.schema().slot_descs()) {
+        if (slot.is_dict_encoded()) {
+            phmap::flat_hash_set<std::string> dict;
+            for (size_t i = 0; i < slot.dict_values_size(); ++i) {
+                const std::string& val = slot.dict_values(i);
+                dict.emplace(val);
+            }
+            _dicts.insert(std::make_pair(slot.col_name(), std::move(dict)));
+        }
+    }
+
     for (auto& tablet : request.tablets()) {
         WriteRequest wrequest;
         wrequest.tablet_id = tablet.tablet_id();
@@ -217,6 +229,7 @@ Status TabletsChannel::_open_all_writers(const PTabletWriterOpenRequest& request
         wrequest.tuple_desc = _tuple_desc;
         wrequest.slots = index_slots;
         wrequest.is_high_priority = _is_high_priority;
+        wrequest.dicts = &_dicts;
 
         DeltaWriter* writer = nullptr;
         auto st = DeltaWriter::open(&wrequest, &writer, _is_vec);

@@ -39,12 +39,14 @@ BinaryDictPageBuilder::BinaryDictPageBuilder(const PageBuilderOptions& options)
           _data_page_builder(nullptr),
           _dict_builder(nullptr),
           _encoding_type(DICT_ENCODING),
-          _pool("BinaryDictPageBuilder") {
+          _pool("BinaryDictPageBuilder"),
+          _dict(options.dict) {
     // initially use DICT_ENCODING
     // TODO: the data page builder type can be created by Factory according to user config
     _data_page_builder.reset(new BitshufflePageBuilder<OLAP_FIELD_TYPE_INT>(options));
     PageBuilderOptions dict_builder_options;
     dict_builder_options.data_page_size = _options.dict_page_size;
+    dict_builder_options.dict = _dict;
     _dict_builder.reset(new BinaryPlainPageBuilder(dict_builder_options));
     reset();
 }
@@ -107,7 +109,9 @@ Status BinaryDictPageBuilder::add(const uint8_t* vals, size_t* count) {
         return Status::OK();
     } else {
         DCHECK_EQ(_encoding_type, PLAIN_ENCODING);
-        return _data_page_builder->add(vals, count);
+        auto status = _data_page_builder->add(vals, count);
+        _is_global_dict_valid = _is_global_dict_valid && _data_page_builder->is_valid_global_dict();
+        return status;
     }
 }
 
@@ -154,6 +158,7 @@ Status BinaryDictPageBuilder::get_dictionary_page(OwnedSlice* dictionary_page) {
                 _dict_builder->add(reinterpret_cast<const uint8_t*>(&dict_item), &add_count));
     }
     *dictionary_page = _dict_builder->finish();
+    _is_global_dict_valid = _is_global_dict_valid && _dict_builder->is_valid_global_dict();
     _dict_items.clear();
     return Status::OK();
 }

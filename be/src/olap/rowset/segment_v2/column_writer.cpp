@@ -254,6 +254,7 @@ Status ScalarColumnWriter::init() {
     // create page builder
     PageBuilderOptions opts;
     opts.data_page_size = _opts.data_page_size;
+    opts.dict = _opts.dict;
     RETURN_IF_ERROR(_encoding_info->create_page_builder(opts, &page_builder));
     if (page_builder == nullptr) {
         return Status::NotSupported(
@@ -502,6 +503,10 @@ Status ScalarColumnWriter::finish_current_page() {
     _push_back_page(page.release());
     _first_rowid = _next_rowid;
     return Status::OK();
+}
+
+bool ScalarColumnWriter::is_global_dict_valid() {
+    return _page_builder->is_valid_global_dict();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

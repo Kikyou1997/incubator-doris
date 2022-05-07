@@ -77,6 +77,13 @@ public:
 
     virtual RowsetTypePB type() const = 0;
 
+    virtual const phmap::flat_hash_set<std::string>& get_invalid_dict_column_names() const {
+        return _invalid_dict_column_names;
+    }
+
+protected:
+    phmap::flat_hash_set<std::string> _invalid_dict_column_names;
+
 private:
     DISALLOW_COPY_AND_ASSIGN(RowsetWriter);
 };
