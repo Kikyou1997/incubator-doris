@@ -2192,5 +2192,15 @@ public class QueryPlanTest {
         String plan = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql);
         Assert.assertTrue(plan.contains("Decode"));
 
+        sql = "SELECT count(*) FROM d_t GROUP BY v2";
+        plan = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql);
+        Assert.assertTrue(plan.contains("Decode"));
+
+        connectContext.getSessionVariable().setEnableProjection(true);
+        String sql3 = "SELECT count(*) FROM d_t GROUP BY v2";
+        String plan3 = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql3);
+        Assert.assertFalse(plan3.contains("Decode"));
+
+
     }
 }

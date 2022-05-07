@@ -967,11 +967,11 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         return sb.toString();
     }
 
-    public boolean couldApplyGlobalDictOptimization(PlanContext context) {
+    public boolean couldApplyGlobalDictOptimization(DecodeContext context) {
         return  false;
     }
 
-    public void filterDictSlot(PlanContext context) {
+    public void filterDictSlot(DecodeContext context) {
         Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
         Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
         // TODO: some predicate could also be optimized by global dict, we will support it in the future
@@ -984,10 +984,10 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
     }
 
-    public void updateSlots(PlanContext context) {}
+    public void updateSlots(DecodeContext context) {}
 
-    public boolean shouldDecode(PlanContext planContext) { return false;}
+    public boolean shouldDecode(DecodeContext decodeContext) { return false;}
 
-    public void generateDecodeNode(PlanContext planContext) {}
+    public void generateDecodeNode(DecodeContext decodeContext) {}
 
 }

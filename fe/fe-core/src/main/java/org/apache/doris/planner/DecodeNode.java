@@ -37,10 +37,15 @@ package org.apache.doris.planner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 
+import com.clearspring.analytics.util.Lists;
+import org.apache.doris.analysis.Analyzer;
+import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.SlotId;
 import org.apache.doris.analysis.TupleId;
+import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.thrift.TDecodeNode;
 import org.apache.doris.thrift.TExplainLevel;
 import org.apache.doris.thrift.TPlanNode;
@@ -58,12 +63,27 @@ public class DecodeNode extends PlanNode {
         this.slotIdToDictId = slotIdToDictId;
     }
 
-    public void addDecodingNeededSlots(SlotId slotId, int dictId) {
-        this.slotIdToDictId.put(slotId.asInt(), dictId);
-    }
-
     public void setSlotIdToDictId(Map<Integer, Integer> slotIdToDictId) {
         this.slotIdToDictId = slotIdToDictId;
+    }
+
+    @Override
+    public Set<SlotId> computeInputSlotIds() throws NotImplementedException {
+        return super.computeInputSlotIds();
+    }
+
+    @Override
+    public void initOutputSlotIds(Set<SlotId> requiredSlotIdSet, Analyzer analyzer) throws NotImplementedException {
+        outputSlotIds = Lists.newArrayList();
+        for (TupleId tupleId : tupleIds) {
+            for (SlotDescriptor slotDescriptor : analyzer.getTupleDesc(tupleId).getSlots()) {
+                if (slotDescriptor.isMaterialized()
+                    && (requiredSlotIdSet == null
+                    || requiredSlotIdSet.contains(slotDescriptor.getId()))) {
+
+                }
+            }
+        }
     }
 
     protected void toThrift(TPlanNode msg) {

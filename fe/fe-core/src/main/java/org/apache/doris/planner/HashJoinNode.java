@@ -767,7 +767,7 @@ public class HashJoinNode extends PlanNode {
     }
 
     @Override
-    public void filterDictSlot(PlanContext context) {
+    public void filterDictSlot(DecodeContext context) {
         Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
         eqJoinConjuncts.forEach(e -> {
             Pair<SlotId, SlotId> slotPair = e.getEqSlots();

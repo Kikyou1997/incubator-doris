@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PlanContext {
+public class DecodeContext {
 
     private Map<Long, Set<Integer>> tableIdToDictCodableSlotSet = new HashMap<>();
 
@@ -38,7 +38,7 @@ public class PlanContext {
 
     private Map<PlanNode, DecodeNode> childToDecodeNode = new HashMap<>();
 
-    public PlanContext(PlannerContext ctx_, DescriptorTable tableDescriptor) {
+    public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor) {
         this.ctx_ = ctx_;
         this.tableDescriptor = tableDescriptor;
     }
@@ -101,11 +101,13 @@ public class PlanContext {
         slotRef.setType(Type.INT);
     }
 
-    public DecodeNode newDecodeNode(PlanNode child, Set<Integer> originSlotIdSet, ArrayList<TupleId> output) {
+    public DecodeNode newDecodeNode(PlanNode child, List<Integer> originSlotIdSet, ArrayList<TupleId> output) {
         Map<Integer, Integer> slotIdToDictId = new HashMap<>();
         for (Integer originSlotId : originSlotIdSet) {
             Integer dictSlotId = slotIdToDictSlotId.get(originSlotId);
-            slotIdToDictId.put(originSlotId, dictSlotId);
+            ColumnDict columnDict = slotIdToColumnDict.get(originSlotId);
+            slotIdToDictId.put(dictSlotId, columnDict.getId());
+            tableDescriptor.putDict(dictSlotId, columnDict);
         }
         DecodeNode decodeNode =  new DecodeNode(ctx_.getNextNodeId(), child, slotIdToDictId, output);
         childToDecodeNode.put(child, decodeNode);
@@ -119,4 +121,5 @@ public class PlanContext {
     public void addSlotToDictIntoDescTbl(int slotId) {
         tableDescriptor.putDict(slotId, slotIdToColumnDict.get(slotId));
     }
+
 }

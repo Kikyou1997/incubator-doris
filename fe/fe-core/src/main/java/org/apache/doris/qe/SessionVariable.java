@@ -906,6 +906,10 @@ public class SessionVariable implements Serializable, Writable {
         return enableProjection;
     }
 
+    public void setEnableProjection(boolean enableProjection) {
+        this.enableProjection = enableProjection;
+    }
+
     // Serialize to thrift object
     // used for rest api
     public TQueryOptions toThrift() {

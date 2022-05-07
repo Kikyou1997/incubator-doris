@@ -13,10 +13,10 @@ import java.util.function.Function;
 
 public class DictPlanner {
 
-    private final PlanContext context;
+    private final DecodeContext context;
 
     public DictPlanner(PlannerContext ctx, DescriptorTable tableDesc) {
-        this.context = new PlanContext(ctx, tableDesc);
+        this.context = new DecodeContext(ctx, tableDesc);
     }
 
     public PlanNode plan(PlanNode plan) {
@@ -28,7 +28,7 @@ public class DictPlanner {
 
         updateNodes(plan);
 
-        generateDecodeNode(plan);
+        generateDecodeNode(null, plan);
 
         plan = insertDecodeNode(null, plan);
 
@@ -56,7 +56,13 @@ public class DictPlanner {
         for (PlanNode child : children) {
             insertDecodeNode(plan, child);
         }
-        return parent == null ? decodeNode : parent;
+        if (parent == null) {
+            if (decodeNode == null) {
+                return plan;
+            }
+            return decodeNode;
+        }
+        return parent;
     }
 
     public void traversePlanTopDown(PlanNode plan, Function<PlanNode, Void> func) {
@@ -66,18 +72,18 @@ public class DictPlanner {
         }
     }
 
-    private void generateDecodeNode(PlanNode plan) {
+    private void generateDecodeNode(PlanNode parent, PlanNode plan) {
         plan.generateDecodeNode(context);
         for (PlanNode child: plan.getChildren()) {
-            generateDecodeNode(child);
+            generateDecodeNode(plan, child);
         }
     }
 
     private void updateNodes(PlanNode plan) {
-        plan.updateSlots(context);
         for (PlanNode child: plan.getChildren()) {
             updateNodes(child);
         }
+        plan.updateSlots(context);
     }
 
     private void filterSupportedDictSlot(PlanNode plan) {

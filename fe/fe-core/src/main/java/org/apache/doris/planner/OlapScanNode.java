@@ -748,7 +748,7 @@ public class OlapScanNode extends ScanNode {
         output.append(prefix).append(String.format(
                 "numNodes=%s", numNodes));
         output.append("\n");
-        StringJoiner dictColumnInfo = new StringJoiner(", ", "Dict slot: ", "");
+        StringJoiner dictColumnInfo = new StringJoiner(", ", "DICT COL: ", "");
         for (Integer slotId : dictAppliedSlotList) {
             dictColumnInfo.add(slotId.toString());
         }
@@ -921,10 +921,6 @@ public class OlapScanNode extends ScanNode {
         }
     }
 
-    public void addDictAppliedSlot(SlotId slotId) {
-        dictAppliedSlotList.add(slotId.asInt());
-    }
-
     /*
     Although sometimes the scan range only involves one instance,
         the data distribution cannot be set to UNPARTITIONED here.
@@ -954,7 +950,7 @@ public class OlapScanNode extends ScanNode {
     }
 
     @Override
-    public void updateSlots(PlanContext context) {
+    public void updateSlots(DecodeContext context) {
         List<SlotDescriptor> slotDescriptorList = desc.getSlots();
         List<SlotDescriptor> slotSet = slotDescriptorList
             .stream()
@@ -966,6 +962,8 @@ public class OlapScanNode extends ScanNode {
         }
 
         desc = context.generateTupleDesc(desc.getId());
+        tupleIds.clear();
+        tupleIds.add(desc.getId());
         List<SlotDescriptor> newSlotDescList = desc.getSlots();
         for (SlotDescriptor slotDesc : slotSet) {
             SlotDescriptor newSlotDesc =  newSlotDescList.get(slotDesc.getSlotOffset());
@@ -973,7 +971,6 @@ public class OlapScanNode extends ScanNode {
             newSlotDesc.setType(Type.INT);
             int slotId = slotDesc.getId().asInt();
             context.addSlotToDictSlot(slotId, newSlotDesc.getId().asInt());
-            context.addSlotToDictIntoDescTbl(slotId);
         }
     }
 }

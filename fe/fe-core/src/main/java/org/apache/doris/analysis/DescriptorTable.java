@@ -55,7 +55,7 @@ public class DescriptorTable {
     private final IdGenerator<TupleId> tupleIdGenerator_ = TupleId.createGenerator();
     private final IdGenerator<SlotId> slotIdGenerator_ = SlotId.createGenerator();
     private final HashMap<SlotId, SlotDescriptor> slotDescs = Maps.newHashMap();
-    private final Map<Integer, ColumnDict> slotIdToColumnDict = Maps.newHashMap();
+    private final Map<Integer, ColumnDict> dictIdToColumnDict = Maps.newHashMap();
 
     public DescriptorTable() {
     }
@@ -174,7 +174,7 @@ public class DescriptorTable {
         }
         TGlobalDict tGlobalDict = new TGlobalDict();
         Map<Integer, TColumnDict> thriftMap = new HashMap<>();
-        for (Map.Entry<Integer, ColumnDict> entry : slotIdToColumnDict.entrySet()) {
+        for (Map.Entry<Integer, ColumnDict> entry : dictIdToColumnDict.entrySet()) {
             thriftMap.put(entry.getKey(), entry.getValue().toThrift());
         }
         tGlobalDict.dicts = thriftMap;
@@ -207,11 +207,11 @@ public class DescriptorTable {
         return out.toString();
     }
 
-    public void putDict(int slotId, ColumnDict dict) {
-        this.slotIdToColumnDict.put(slotId, dict);
+    public void putDict(int dictId, ColumnDict dict) {
+        this.dictIdToColumnDict.put(dictId, dict);
     }
 
-    public Map<Integer, ColumnDict> getSlotIdToColumnDict() {
-        return slotIdToColumnDict;
+    public Map<Integer, ColumnDict> getDictIdToColumnDict() {
+        return dictIdToColumnDict;
     }
 }
