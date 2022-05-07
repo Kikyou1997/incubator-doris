@@ -417,6 +417,7 @@ public class SelectStmt extends QueryStmt {
         if (!analyzer.isWithClause()) {
             registerIsNotEmptyPredicates(analyzer);
         }
+        metaQuery = metaQuery && selectList.isDistinct();
         // populate selectListExprs, aliasSMap, groupingSmap and colNames
         for (SelectListItem item : selectList.getItems()) {
             if (item.isStar()) {
@@ -1047,21 +1048,6 @@ public class SelectStmt extends QueryStmt {
                 Expr.substituteList(aggExprs, countAllMap, analyzer, false);
         aggExprs.clear();
         TreeNode.collect(substitutedAggs, Expr.isAggregatePredicate(), aggExprs);
-
-        if (metaQuery) {
-            long globalDictFuncCount = aggExprs.stream().filter(FunctionCallExpr::isGlobalDict).count();
-            if (globalDictFuncCount == 0) {
-                // simply ignore the hint
-                metaQuery = false;
-            } else if (globalDictFuncCount > 1) {
-                throw new AnalysisException("Multiple global_dict function is not supported for now");
-            } else if (aggExprs.size() > 1) {
-                throw new AnalysisException("Mix the global_dict with other aggregate function is not permitted");
-            } else if (groupByClause != null){
-                throw new AnalysisException("Cannot impose the global_dict function " +
-                        "on the SQL which have GROUP BY clause");
-            }
-        }
 
         List<TupleId> groupingByTupleIds = new ArrayList<>();
         if (groupByClause != null) {

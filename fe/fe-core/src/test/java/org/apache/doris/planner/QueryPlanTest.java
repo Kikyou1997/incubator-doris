@@ -2163,18 +2163,12 @@ public class QueryPlanTest {
             "PROPERTIES(\n" +
             "    \"replication_num\"=\"1\"\n" +
             ");");
-        String sql = "SELECT global_dict(v1) FROM test.meta_scan_test [META]";
+        String sql = "SELECT distinct(v1) FROM test.meta_scan_test [META]";
         String explainString = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql);
         Assert.assertTrue(explainString.contains("META_SCAN"));
-        String errorSQL = "SELECT global_dict(v1) FROM test.meta_scan_test [META] group by test.v1";
-        explainString = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, errorSQL);
-        Assert.assertTrue(explainString.contains("Cannot impose the global_dict function on the SQL which have GROUP BY clause"));
-        errorSQL = "SELECT global_dict(v1), count(*) FROM test.meta_scan_test [META]";
-        explainString = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, errorSQL);
-        Assert.assertTrue(explainString.contains("Mix the global_dict with other aggregate function is not permitted"));
-        errorSQL = "SELECT global_dict(v1), global_dict(v2) FROM test.meta_scan_test [META]";
-        explainString = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, errorSQL);
-        Assert.assertTrue(explainString.contains("Multiple global_dict function is not supported for now"));
+        sql = "SELECT v1 FROM test.meta_scan_test [META]";
+        explainString = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql);
+        Assert.assertFalse(explainString.contains("META_SCAN"));
 
     }
 

@@ -138,23 +138,16 @@ public class OlapMetaScanNode extends ScanNode {
     }
 
     public void pullDictSlots(AggregateInfo aggInfo) {
-        Preconditions.checkState(aggInfo.getGroupingExprs().isEmpty());
-        List<FunctionCallExpr> funcExprList = aggInfo.getAggregateExprs();
-        for (FunctionCallExpr funcExpr : funcExprList) {
-            FunctionParams funcParams = funcExpr.getFnParams();
-            if (funcParams == null) {
-                continue;
-            }
-            for (Expr expr : funcParams.exprs()) {
-                if (expr instanceof SlotRef) {
-                    SlotRef slotRef = (SlotRef) expr;
-                    checkSlot(slotRef);
-                    // We will set the value to dict id when we support incremental dict update.
-                    // For now, set -1 as a placeholder only which indicates BE that there doesn't exist
-                    // a dict right now
-                    slotIdToDictId.put(slotRef.getSlotId().asInt(), -1);
-                }
-            }
+        List<Expr> groupingExprs = aggInfo.getGroupingExprs();
+        for (Expr expr : groupingExprs) {
+            Preconditions.checkArgument(expr instanceof SlotRef);
+            SlotRef slotRef = (SlotRef) expr;
+            checkSlot(slotRef);
+            // We will set the value to dict id when we support incremental dict update.
+            // For now, set -1 as a placeholder only which indicates BE that there doesn't exist
+            // a dict right now
+            slotIdToDictId.put(slotRef.getSlotId().asInt(), -1);
+
         }
     }
 
