@@ -335,14 +335,9 @@ struct TSchemaScanNode {
 
 struct TMetaScanNode {
   1: required Types.TTupleId tuple_id
-  2: required list<string> key_column_name
-  3: required list<Types.TPrimitiveType> key_column_type
-  4: required bool is_preaggregation
-  5: optional string sort_column
-  6: optional Types.TKeysType keyType
-  7: optional string table_name
+  
   //slot_id to global_dict_id
-  8: required map<Types.TSlotId,i32> slot_to_dict
+  2: required map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TDecodeNode {
