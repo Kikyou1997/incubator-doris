@@ -111,6 +111,15 @@ DataTypePtr DataTypeFactory::create_data_type(const TypeDescriptor& col_desc, bo
         nested =
                 std::make_shared<vectorized::DataTypeArray>(create_data_type(col_desc.children[0]));
         break;
+    case TYPE_DICT_UINT8:
+        nested = std::make_shared<DataTypeDictEncodedStringUInt8>();
+        break;
+    case TYPE_DICT_UINT16:
+        nested = std::make_shared<DataTypeDictEncodedStringUInt16>();
+        break;
+    case TYPE_DICT_UINT32:
+        nested = std::make_shared<DataTypeDictEncodedStringUInt32>();
+        break;
     case INVALID_TYPE:
     default:
         DCHECK(false) << "invalid PrimitiveType:" << (int)col_desc.type;

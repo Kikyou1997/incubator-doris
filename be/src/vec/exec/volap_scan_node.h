@@ -33,7 +33,7 @@ class VOlapScanNode final : public OlapScanNode {
 public:
     VOlapScanNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs);
     friend class VOlapScanner;
-
+    Status init(const TPlanNode& tnode, RuntimeState* state = nullptr) override;
     Status get_next(RuntimeState* state, RowBatch* row_batch, bool* eos) override {
         return Status::NotSupported("Not Implemented VOlapScanNode Node::get_next scalar");
     }
@@ -49,6 +49,7 @@ private:
     Status _add_blocks(std::vector<Block*>& block);
     int _start_scanner_thread_task(RuntimeState* state, int block_per_scanner);
     Block* _alloc_block(bool& get_free_block);
+    Status _do_dict_encode(Block& block) const;
 
     std::vector<Block*> _scan_blocks;
     std::vector<Block*> _materialized_blocks;
@@ -70,6 +71,8 @@ private:
     int _max_materialized_blocks;
 
     size_t _block_size = 0;
+
+    std::map<int, GlobalDictSPtr> _dicts;
 };
 } // namespace vectorized
 } // namespace doris

@@ -34,6 +34,15 @@ VOlapScanNode::VOlapScanNode(ObjectPool* pool, const TPlanNode& tnode, const Des
     _free_blocks.reserve(_max_materialized_blocks);
 }
 
+Status VOlapScanNode::init(const TPlanNode& tnode, RuntimeState* state) {
+    assert(state);
+    RETURN_IF_ERROR(OlapScanNode::init(tnode, state));
+    for (const auto& item : _olap_scan_node.slot_to_dict) {
+        _dicts.emplace(item.first, state->get_global_dict(item.first));
+    }
+    return Status::OK();
+}
+
 void VOlapScanNode::transfer_thread(RuntimeState* state) {
     // scanner open pushdown to scanThread
     SCOPED_ATTACH_TASK_THREAD(state, mem_tracker());
@@ -315,6 +324,16 @@ Status VOlapScanNode::_add_blocks(std::vector<Block*>& block) {
     return Status::OK();
 }
 
+Status VOlapScanNode::_do_dict_encode(Block& block) const {
+    assert(!_dicts.empty());
+    for (auto& dict : _dicts) {
+        if (!dict.second->encode(block.get_by_position(dict.first))) {
+            return Status::Aborted("encode dict column failed");
+        }
+    }
+    return Status::OK();
+}
+
 Status VOlapScanNode::start_scan_thread(RuntimeState* state) {
     if (_scan_ranges.empty()) {
         _transfer_done = true;
@@ -501,8 +520,16 @@ Status VOlapScanNode::get_next(RuntimeState* state, Block* block, bool* eos) {
     if (nullptr != materialized_block) {
         // notify scanner
         _block_consumed_cv.notify_one();
-        // get scanner's block memory
-        block->swap(*materialized_block);
+
+        if (!_dicts.empty()) {
+            auto cloned = materialized_block->clone_with_columns(materialized_block->get_columns());
+            materialized_block->clear();
+            _do_dict_encode(cloned);
+            block->swap(cloned);
+        } else {
+            // get scanner's block memory
+            block->swap(*materialized_block);
+        }
         VLOG_ROW << "VOlapScanNode output rows: " << block->rows();
         reached_limit(block, eos);
 

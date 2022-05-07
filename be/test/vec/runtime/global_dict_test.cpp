@@ -32,10 +32,6 @@ namespace doris::vectorized {
 TEST(GlobalDictTest, EncodeAndDecode) {
     std::vector<std::string> dict_values {"RAIL", "FOB", "MAIL", "SHIP", "TRUCK", "REG AIR", "AIR"};
     auto dict = std::make_shared<GlobalDict>(dict_values);
-    for (const auto& val : dict_values) {
-        StringValue v {val.data(), (int)val.size()};
-        dict->insert_value(v);
-    }
     size_t row_num = 1024;
     auto column = ColumnString::create();
     for (size_t i = 0; i < row_num; ++i) {

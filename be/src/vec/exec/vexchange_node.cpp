@@ -74,8 +74,6 @@ Status VExchangeNode::open(RuntimeState* state) {
         RETURN_IF_ERROR(_stream_recvr->create_merger(_vsort_exec_exprs.lhs_ordering_expr_ctxs(),
                                                      _is_asc_order, _nulls_first,
                                                      state->batch_size(), _limit, _offset));
-    }else{
-        ADD_THREAD_LOCAL_MEM_TRACKER(_stream_recvr->mem_tracker());
     }
 
     return Status::OK();

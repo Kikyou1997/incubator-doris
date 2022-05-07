@@ -115,7 +115,11 @@ public:
     size_t byte_size() { return _dict_data.size() * sizeof(_dict_data[0]); }
 
 protected:
-    size_t cardinality() { return _dict_data.size(); }
+    size_t cardinality() { 
+        //always use int32_t for now.
+        return UINT32_MAX - 1;
+        //return _dict_data.size(); 
+    }
 
 private:
     StringValue::Comparator _comparator;
