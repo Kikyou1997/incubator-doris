@@ -234,7 +234,8 @@ Status BetaRowset::get_dict_data(std::set<std::string>& dict_words, int col_id){
     std::vector<segment_v2::SegmentSharedPtr> segments;
     RETURN_NOT_OK(load_segments(&segments));
     for (auto& seg_ptr: segments){
-        RETURN_IF_ERROR(seg_ptr->get_dict_data(dict_words, col_id));
+        Status status = seg_ptr->get_dict_data(dict_words, col_id);
+        if (!status.ok()) return status;
     }
     return Status::OK();
 }

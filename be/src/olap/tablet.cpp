@@ -1448,13 +1448,23 @@ void Tablet::reset_compaction(CompactionType compaction_type) {
 }
 
 Status Tablet::get_dict_data(std::set<std::string>& dict_words, int col_id){
-    for( auto entry: _rs_version_map)
+    std::vector<BetaRowset*> beta_row_sets;
     {
-        auto rowset_ptr = dynamic_cast<BetaRowset*>(entry.second.get());
-        //skip delete rowset and empty rowset
-        if (nullptr != rowset_ptr && !rowset_ptr->delete_flag() && rowset_ptr->num_rows() > 0){
-            RETURN_IF_ERROR(rowset_ptr->get_dict_data(dict_words, col_id));
+        std::shared_lock rdlock(get_header_lock());
+        for( auto entry: _rs_version_map)
+        {
+            auto rowset_ptr = dynamic_cast<BetaRowset*>(entry.second.get());
+            //skip delete rowset and empty rowset
+            if (nullptr != rowset_ptr && !rowset_ptr->delete_flag() && rowset_ptr->num_rows() > 0){
+                beta_row_sets.emplace_back(rowset_ptr);
+            }
         }
+    }
+
+    for( auto rs: beta_row_sets)
+    {
+        Status status = rs->get_dict_data(dict_words, col_id);
+        if (!status.ok()) return status;
     }
     return  Status::OK();
 }

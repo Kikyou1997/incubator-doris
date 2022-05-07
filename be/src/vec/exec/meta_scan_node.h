@@ -18,13 +18,14 @@
 
 #pragma once
 
-#include "exec/exec_node.h"
+#include "exec/scan_node.h"
+#include "olap/tablet.h"
 
 namespace doris{
 namespace vectorized{
 
 class VOlapScanNode;
-class MetaScanNode : public ExecNode {
+class MetaScanNode : public ScanNode {
 public:
     MetaScanNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs);
     Status get_next(RuntimeState* state, RowBatch* row_batch, bool* eos) override {
@@ -34,13 +35,18 @@ public:
     Status init(const TPlanNode& tnode, RuntimeState* state = nullptr) override;
     Status prepare(RuntimeState* state) override;
     Status open(RuntimeState* state) override;
+    Status close(RuntimeState* state) override;
+    Status set_scan_ranges(const std::vector<TScanRangeParams>& scan_ranges) override;
 private:
+    Status init_tablets();
     TupleId _tuple_id;
     TMetaScanNode _meta_scan_node;
     const TupleDescriptor* _tuple_desc;
     std::map<int, int> _slot_to_dict;
-    std::unique_ptr<VOlapScanNode> _inner_scan_node;  
-    TPlanNode _inner_tnode;
+    std::vector<int> _tablet_ids;
+    std::vector<TabletSharedPtr> _tablets;
+    int32_t _return_column_id;
 };
+
 } // namespace vectorized
 } // namespace doris
