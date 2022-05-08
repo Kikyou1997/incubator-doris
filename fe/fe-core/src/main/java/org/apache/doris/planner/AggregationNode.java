@@ -377,15 +377,20 @@ public class AggregationNode extends PlanNode {
                 SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
             }
         });
+        findEncodeNeedSlot(context);
         super.filterDictSlot(context);
     }
 
     @Override
     public void updateSlots(DecodeContext context) {
-        if (!context.isCouldEncoded()) {
-            return;
+        for (SlotRef slotRef : requireEncodeSlot) {
+            context.updateSlotRefType(slotRef);
         }
-        updateSlotType(aggInfo.getGroupingExprs(), context);
+    }
+
+    private void findEncodeNeedSlot(DecodeContext context) {
+
+        findEncodeNeedSlot(aggInfo.getGroupingExprs(), context);
         for (FunctionCallExpr func : aggInfo.getAggregateExprs()) {
             String funcName = func.getFnName().getFunction();
             if (!dictAggregationSupportedFunction.contains(funcName)) {
@@ -396,11 +401,11 @@ public class AggregationNode extends PlanNode {
             if (funcParamExprList == null) {
                 continue;
             }
-            updateSlotType(funcParamExprList, context);
+            findEncodeNeedSlot(funcParamExprList, context);
         }
     }
 
-    private void updateSlotType(List<Expr> funcParamExprList, DecodeContext context) {
+    private void findEncodeNeedSlot(List<Expr> funcParamExprList, DecodeContext context) {
         Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
         for (Expr expr : funcParamExprList) {
             if (expr instanceof SlotRef) {
@@ -414,7 +419,8 @@ public class AggregationNode extends PlanNode {
                 if (!dictCodableSlot.contains(slotId)) {
                     continue;
                 }
-                context.updateSlotRefType(slotRef);
+                requireEncodeSlot.add(slotRef);
+                context.addEncodeNeededSlot(slotId);
             }
         }
     }

@@ -43,11 +43,11 @@ public class DecodeContext {
 
     private Map<Integer, Integer> tupleIdToNewTupleWithDictSlot = new HashMap<>();
 
-    private boolean couldEncoded;
+    private Set<Integer> encodeNeededSlotSet = new HashSet<>();
+
+    private boolean needEncode;
 
     private Set<Integer> dictOptimizationDisabledSlot = new HashSet<>();
-
-    private Set<Integer> dictCodableSlotSet = new HashSet<>();
 
     private DescriptorTable tableDescriptor;
 
@@ -63,7 +63,6 @@ public class DecodeContext {
     public void addDictCodableSlot(long tableId, int slotId) {
         Set<Integer> slotSet = tableIdToDictCodableSlotSet.getOrDefault(tableId, new HashSet<>());
         slotSet.add(slotId);
-        dictCodableSlotSet.add(slotId);
     }
 
     public void addAvailableDict(int slotId, ColumnDict dict) {
@@ -75,20 +74,19 @@ public class DecodeContext {
     }
 
     public Set<Integer> getAllDictCodableSlot() {
-        return dictCodableSlotSet;
+        return slotIdToColumnDict.keySet();
     }
+
+    public Set<Integer> getAllEncodeNeededSlot() {
+        return encodeNeededSlotSet;
+    }
+
+
 
     public Set<Integer> getDictOptimizationDisabledSlot() {
         return dictOptimizationDisabledSlot;
     }
 
-    public boolean isCouldEncoded() {
-        return couldEncoded;
-    }
-
-    public void setCouldEncoded(boolean couldEncoded) {
-        this.couldEncoded = couldEncoded;
-    }
 
     public TupleDescriptor generateTupleDesc(TupleId src) {
         TupleDescriptor originTupleDesc = tableDescriptor.getTupleDesc(src);
@@ -139,4 +137,24 @@ public class DecodeContext {
         tableDescriptor.putDict(slotId, slotIdToColumnDict.get(slotId));
     }
 
+    public int getDictId(int slotId) {
+        ColumnDict columnDict = slotIdToColumnDict.get(slotId);
+        return columnDict.getId();
+    }
+
+    public boolean isNeedEncode() {
+        return needEncode;
+    }
+
+    public void setNeedEncode(boolean needEncode) {
+        this.needEncode = needEncode;
+    }
+
+    public void addEncodeNeededSlot(int slotId) {
+        encodeNeededSlotSet.add(slotId);
+    }
+
+    public boolean needEncode() {
+        return !encodeNeededSlotSet.isEmpty();
+    }
 }

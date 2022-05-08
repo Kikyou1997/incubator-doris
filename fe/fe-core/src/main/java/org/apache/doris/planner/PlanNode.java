@@ -20,15 +20,7 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.Analyzer;
-import org.apache.doris.analysis.CompoundPredicate;
-import org.apache.doris.analysis.Expr;
-import org.apache.doris.analysis.ExprId;
-import org.apache.doris.analysis.ExprSubstitutionMap;
-import org.apache.doris.analysis.FunctionName;
-import org.apache.doris.analysis.SlotId;
-import org.apache.doris.analysis.TupleDescriptor;
-import org.apache.doris.analysis.TupleId;
+import org.apache.doris.analysis.*;
 import org.apache.doris.catalog.Function;
 import org.apache.doris.catalog.Type;
 import org.apache.doris.common.AnalysisException;
@@ -138,6 +130,8 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
 
     protected NodeType nodeType = NodeType.DEFAULT;
     protected StatsDeriveResult statsDeriveResult;
+
+    protected Set<SlotRef> requireEncodeSlot;
 
     protected PlanNode(PlanNodeId id, ArrayList<TupleId> tupleIds, String planNodeName) {
         this.id = id;

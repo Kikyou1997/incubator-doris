@@ -56,6 +56,7 @@ public class DescriptorTable {
     private final IdGenerator<SlotId> slotIdGenerator_ = SlotId.createGenerator();
     private final HashMap<SlotId, SlotDescriptor> slotDescs = Maps.newHashMap();
     private final Map<Integer, ColumnDict> dictIdToColumnDict = Maps.newHashMap();
+    private final Map<Integer, Integer> slotIdToDict = Maps.newHashMap();
 
     public DescriptorTable() {
     }
@@ -213,5 +214,9 @@ public class DescriptorTable {
 
     public Map<Integer, ColumnDict> getDictIdToColumnDict() {
         return dictIdToColumnDict;
+    }
+
+    public void addSlotToDict(int slotId, int dictId) {
+        slotIdToDict.put(slotId, dictId);
     }
 }

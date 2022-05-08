@@ -43,15 +43,19 @@ public class DictPlanner {
         // some other expressions then we simply disable the dict optimization on it
         filterSupportedDictSlot(plan);
 
-        updateNodes(plan);
+        if (context.needEncode()) {
 
-        generateDecodeNode(null, plan);
+            updateNodes(plan);
 
-        plan = insertDecodeNode(null, plan);
+            generateDecodeNode(null, plan);
+
+            plan = insertDecodeNode(null, plan);
+        }
 
         return plan;
 
     }
+
 
     private PlanNode insertDecodeNode(PlanNode parent, PlanNode plan) {
         Map<PlanNode, DecodeNode> childToDecodeMap = context.getChildToDecodeNode();
@@ -106,7 +110,7 @@ public class DictPlanner {
     private void filterSupportedDictSlot(PlanNode plan) {
         plan.filterDictSlot(context);
         for (PlanNode child: plan.getChildren()) {
-            findDictCodableSlot(child);
+           filterSupportedDictSlot(child);
         }
     }
 

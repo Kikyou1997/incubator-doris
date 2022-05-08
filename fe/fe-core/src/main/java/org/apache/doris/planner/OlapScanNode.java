@@ -145,7 +145,7 @@ public class OlapScanNode extends ScanNode {
 
     private Map<Long, Integer> tabletId2BucketSeq = Maps.newHashMap();
 
-    private List<Integer> dictAppliedSlotList = new ArrayList<>();
+    private Map<Integer, Integer> slotIdToDictId = Maps.newHashMap();
     // a bucket seq may map to many tablets, and each tablet has a TScanRangeLocations.
     public ArrayListMultimap<Integer, TScanRangeLocations> bucketSeq2locations = ArrayListMultimap.create();
 
@@ -747,12 +747,15 @@ public class OlapScanNode extends ScanNode {
         output.append(prefix).append(String.format(
                 "numNodes=%s", numNodes));
         output.append("\n");
-        StringJoiner dictColumnInfo = new StringJoiner(", ", "DICT COL: ", "");
-        for (Integer slotId : dictAppliedSlotList) {
-            dictColumnInfo.add(slotId.toString());
+        if (!slotIdToDictId.isEmpty()) {
+            StringJoiner dictColumnInfo = new StringJoiner(", ", "DICT COL: ", "");
+            for (Map.Entry<Integer, Integer> entry : slotIdToDictId.entrySet()) {
+                dictColumnInfo.add(String.format("<%d, %d>", entry.getKey(), entry.getValue()));
+            }
+            output.append(prefix).append(dictColumnInfo.toString());
+            output.append("\n");
         }
-        output.append(prefix).append(dictColumnInfo.toString());
-        output.append("\n");
+
         return output.toString();
     }
 
@@ -781,7 +784,7 @@ public class OlapScanNode extends ScanNode {
             msg.olap_scan_node.setSortColumn(sortColumn);
         }
         msg.olap_scan_node.setKeyType(olapTable.getKeysType().toThrift());
-        msg.olap_scan_node.dict_applied_slot = dictAppliedSlotList;
+        msg.olap_scan_node.slot_to_dict = slotIdToDictId;
     }
 
     // export some tablets
@@ -953,12 +956,8 @@ public class OlapScanNode extends ScanNode {
         List<SlotDescriptor> slotDescriptorList = desc.getSlots();
         List<SlotDescriptor> slotSet = slotDescriptorList
             .stream()
-            .filter(d -> context.getAllDictCodableSlot().contains(d.getId().asInt()))
+            .filter(d -> context.getAllEncodeNeededSlot().contains(d.getId().asInt()))
             .collect(Collectors.toList());
-
-        if (slotSet.size() > 0) {
-            context.setCouldEncoded(true);
-        }
 
         desc = context.generateTupleDesc(desc.getId());
         tupleIds.clear();
@@ -966,10 +965,13 @@ public class OlapScanNode extends ScanNode {
         List<SlotDescriptor> newSlotDescList = desc.getSlots();
         for (SlotDescriptor slotDesc : slotSet) {
             SlotDescriptor newSlotDesc =  newSlotDescList.get(slotDesc.getSlotOffset());
-            dictAppliedSlotList.add(newSlotDesc.getId().asInt());
-            newSlotDesc.setType(Type.INT);
             int slotId = slotDesc.getId().asInt();
-            context.addSlotToDictSlot(slotId, newSlotDesc.getId().asInt());
+            newSlotDesc.setType(Type.INT);
+            int dictId = context.getDictId(slotId);
+            int newSlotId = newSlotDesc.getId().asInt();
+            slotIdToDictId.put(newSlotId ,dictId);
+            context.addSlotToDictSlot(slotId, newSlotId);
         }
     }
+
 }
