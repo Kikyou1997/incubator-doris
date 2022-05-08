@@ -385,8 +385,24 @@ public class AggregationNode extends PlanNode {
         if (!context.isCouldEncoded()) {
             return;
         }
+        updateSlotType(aggInfo.getGroupingExprs(), context);
+        for (FunctionCallExpr func : aggInfo.getAggregateExprs()) {
+            String funcName = func.getFnName().getFunction();
+            if (!dictAggregationSupportedFunction.contains(funcName)) {
+                continue;
+            }
+            FunctionParams functionParams = func.getParams();
+            List<Expr> funcParamExprList = functionParams.exprs();
+            if (funcParamExprList == null) {
+                continue;
+            }
+            updateSlotType(funcParamExprList, context);
+        }
+    }
+
+    private void updateSlotType(List<Expr> funcParamExprList, DecodeContext context) {
         Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
-        for (Expr expr : aggInfo.getGroupingExprs()) {
+        for (Expr expr : funcParamExprList) {
             if (expr instanceof SlotRef) {
                 SlotRef slotRef = (SlotRef) expr;
                 Column column = slotRef.getColumn();
@@ -399,33 +415,6 @@ public class AggregationNode extends PlanNode {
                     continue;
                 }
                 context.updateSlotRefType(slotRef);
-            }
-        }
-
-        for (FunctionCallExpr func : aggInfo.getAggregateExprs()) {
-            String funcName = func.getFnName().getFunction();
-            if (!dictAggregationSupportedFunction.contains(funcName)) {
-                continue;
-            }
-            FunctionParams functionParams = func.getParams();
-            List<Expr> funcParamExprList = functionParams.exprs();
-            if (funcParamExprList == null) {
-                continue;
-            }
-            for (Expr expr : funcParamExprList) {
-                if (expr instanceof SlotRef) {
-                    SlotRef slotRef = (SlotRef) expr;
-                    Column column = slotRef.getColumn();
-                    // means it's not a colRef
-                    if (column == null) {
-                        continue;
-                    }
-                    int slotId = slotRef.getSlotId().asInt();
-                    if (!dictCodableSlot.contains(slotId)) {
-                        continue;
-                    }
-                    context.updateSlotRefType(slotRef);
-                }
             }
         }
     }

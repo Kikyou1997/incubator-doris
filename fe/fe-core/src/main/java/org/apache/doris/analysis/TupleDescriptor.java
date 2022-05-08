@@ -14,16 +14,11 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-// This file is copied from
-// https://github.com/apache/impala/blob/branch-2.9.0/fe/src/main/java/org/apache/impala/TupleDescriptor.java
-// and modified by Doris
-
 package org.apache.doris.analysis;
 
 import org.apache.doris.catalog.ColumnStats;
 import org.apache.doris.catalog.PrimitiveType;
 import org.apache.doris.catalog.Table;
-import org.apache.doris.catalog.Type;
 import org.apache.doris.thrift.TTupleDescriptor;
 
 import com.google.common.base.Joiner;
@@ -376,10 +371,6 @@ public class TupleDescriptor {
                 .add("is_materialized", isMaterialized)
                 .add("slots", "[" + Joiner.on(", ").join(slotStrings) + "]")
                 .toString();
-    }
-
-    public void updateSlotType(int offset, Type type) {
-        SlotDescriptor slotDesc = slots.get(offset);
     }
 
     public String getExplainString() {

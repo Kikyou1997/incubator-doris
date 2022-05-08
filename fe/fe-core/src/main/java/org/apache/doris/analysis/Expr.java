@@ -1921,8 +1921,4 @@ abstract public class Expr extends TreeNode<Expr> implements ParseNode, Cloneabl
         }
         return true;
     }
-
-    public boolean couldApplyDictOptimization() {
-        return false;
-    }
 }
