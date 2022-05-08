@@ -86,13 +86,6 @@ public class DictPlanner {
         return parent;
     }
 
-    public void traversePlanTopDown(PlanNode plan, Function<PlanNode, Void> func) {
-        func.apply(plan);
-        for (PlanNode child : plan.getChildren()) {
-            traversePlanTopDown(child, func);
-        }
-    }
-
     private void generateDecodeNode(PlanNode parent, PlanNode plan) {
         plan.generateDecodeNode(context);
         for (PlanNode child: plan.getChildren()) {
@@ -114,7 +107,6 @@ public class DictPlanner {
         }
     }
 
-
     private void findDictCodableSlot(PlanNode node) {
 
         if (node instanceof OlapScanNode) {
@@ -125,14 +117,14 @@ public class DictPlanner {
             for (SlotDescriptor slotDesc : slotsList) {
                 Column column = slotDesc.getColumn();
                 String colName = column.getName();
-                ColumnDict columnDict = tryToGetColumnDict(tableId, colName);
+                IDictManager dictManager = IDictManager.getInstance();
+                ColumnDict columnDict = dictManager.getDict(tableId, colName);
                 if (columnDict == null) {
                     continue;
                 }
                 int slotId = slotDesc.getId().asInt();
                 context.addDictCodableSlot(tableId, slotId);
                 context.addAvailableDict(slotId, columnDict);
-                return;
             }
         }
 
@@ -140,12 +132,6 @@ public class DictPlanner {
             findDictCodableSlot(planNode);
         }
 
-    }
-
-    private ColumnDict tryToGetColumnDict(long tableId, String columnName) {
-        IDictManager dictManager = IDictManager.getInstance();
-        ColumnDict dict = dictManager.getDict(tableId, columnName);
-        return dict;
     }
 
 }
