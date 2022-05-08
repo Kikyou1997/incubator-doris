@@ -131,7 +131,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
     protected NodeType nodeType = NodeType.DEFAULT;
     protected StatsDeriveResult statsDeriveResult;
 
-    protected Set<SlotRef> requireEncodeSlot;
+    protected Set<SlotRef> requireEncodeSlot = Sets.newHashSet();
 
     protected PlanNode(PlanNodeId id, ArrayList<TupleId> tupleIds, String planNodeName) {
         this.id = id;
