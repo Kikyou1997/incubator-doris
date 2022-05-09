@@ -37,7 +37,6 @@ VOlapScanNode::VOlapScanNode(ObjectPool* pool, const TPlanNode& tnode, const Des
 Status VOlapScanNode::init(const TPlanNode& tnode, RuntimeState* state) {
     assert(state);
     RETURN_IF_ERROR(OlapScanNode::init(tnode, state));
-
     return Status::OK();
 }
 
@@ -49,6 +48,7 @@ Status VOlapScanNode::prepare(RuntimeState* state){
             _dicts.emplace(item.first, state->get_global_dict(item.first));
         }
     }
+    return Status::OK();
 }
 
 void VOlapScanNode::transfer_thread(RuntimeState* state) {
