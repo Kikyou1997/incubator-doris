@@ -397,6 +397,7 @@ Status ExecNode::create_node(RuntimeState* state, ObjectPool* pool, const TPlanN
         case TPlanNodeType::TABLE_FUNCTION_NODE:
         case TPlanNodeType::BROKER_SCAN_NODE:
         case TPlanNodeType::META_SCAN_NODE:
+        case TPlanNodeType::DECODE_NODE:
             break;
         default: {
             const auto& i = _TPlanNodeType_VALUES_TO_NAMES.find(tnode.node_type);
