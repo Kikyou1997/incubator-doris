@@ -17,7 +17,11 @@
 
 package org.apache.doris.statistics;
 
+import com.google.common.collect.Lists;
+import org.apache.doris.qe.ConnectContext;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public interface IDictManager {
@@ -25,9 +29,23 @@ public interface IDictManager {
     ColumnDict getDict(long tableId, String colName);
 
     static IDictManager getInstance() {
+        // TODO: for test only, delete it later
         return new IDictManager() {
             @Override
             public ColumnDict getDict(long tableId, String colName) {
+                if (ConnectContext.get().getSessionVariable().isDictTest()) {
+                    if (colName.equalsIgnoreCase("l_shipmode")) {
+                        return new ColumnDict() {
+                            @Override
+                            public List<String> getDict() {
+                                List<String> l = Lists.newArrayList("FOB", "MAIL", "RAIL", "SHIP", "TRUCK",
+                                    "REG AIR", "AIR");
+                                Collections.sort(l);
+                                return l;
+                            }
+                        };
+                    }
+                }
                 switch (colName) {
                     case "v1":
                         return new ColumnDict() {

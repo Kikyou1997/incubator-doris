@@ -180,11 +180,17 @@ public class SessionVariable implements Serializable, Writable {
 
     public static final String ENABLE_PROJECTION = "enable_projection";
 
+    // TODO: for test only, delete it later
+    public static final String DICT_TEST = "dict_test";
+
     // session origin value
     public Map<Field, String> sessionOriginValue = new HashMap<Field, String>();
     // check stmt is or not [select /*+ SET_VAR(...)*/ ...]
     // if it is setStmt, we needn't collect session origin value
     public boolean isSingleSetVar = false;
+
+    @VariableMgr.VarAttr(name = DICT_TEST)
+    public boolean dictTest = false;
 
     @VariableMgr.VarAttr(name = INSERT_VISIBLE_TIMEOUT_MS, needForward = true)
     public long insertVisibleTimeoutMs = DEFAULT_INSERT_VISIBLE_TIMEOUT_MS;
@@ -1124,5 +1130,14 @@ public class SessionVariable implements Serializable, Writable {
             setLoadMemLimit(queryOptions.getLoadMemLimit());
         }
     }
+
+    public boolean isDictTest() {
+        return dictTest;
+    }
+
+    public void setDictTest(boolean dictTest) {
+        this.dictTest = dictTest;
+    }
+
 }
 
