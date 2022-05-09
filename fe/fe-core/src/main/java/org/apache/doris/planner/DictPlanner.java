@@ -96,7 +96,7 @@ public class DictPlanner {
         for (PlanNode child: plan.getChildren()) {
             updateNodes(child);
         }
-        plan.updateSlots(context);
+        plan.updateNode(context);
     }
 
     private void filterSupportedDictSlot(PlanNode plan) {

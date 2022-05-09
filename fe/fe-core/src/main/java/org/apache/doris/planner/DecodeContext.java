@@ -187,6 +187,5 @@ public class DecodeContext {
         for (Expr child : children) {
             getDecodeRequiredSlotIdOfExpr(child, slotIdList);
         }
-
     }
 }

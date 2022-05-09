@@ -978,7 +978,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
     }
 
-    public void updateSlots(DecodeContext context) {}
+    public void updateNode(DecodeContext context) {}
 
     public boolean shouldDecode(DecodeContext decodeContext) { return false;}
 

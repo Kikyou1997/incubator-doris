@@ -953,7 +953,7 @@ public class OlapScanNode extends ScanNode {
     }
 
     @Override
-    public void updateSlots(DecodeContext context) {
+    public void updateNode(DecodeContext context) {
         List<SlotDescriptor> slotDescriptorList = desc.getSlots();
         List<SlotDescriptor> slotSet = slotDescriptorList
             .stream()

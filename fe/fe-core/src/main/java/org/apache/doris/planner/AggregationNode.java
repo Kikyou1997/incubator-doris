@@ -20,15 +20,7 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.AggregateInfo;
-import org.apache.doris.analysis.Analyzer;
-import org.apache.doris.analysis.Expr;
-import org.apache.doris.analysis.FunctionCallExpr;
-import org.apache.doris.analysis.FunctionParams;
-import org.apache.doris.analysis.SlotDescriptor;
-import org.apache.doris.analysis.SlotId;
-import org.apache.doris.analysis.SlotRef;
-import org.apache.doris.analysis.TupleId;
+import org.apache.doris.analysis.*;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
 import org.apache.doris.common.Id;
@@ -382,7 +374,7 @@ public class AggregationNode extends PlanNode {
     }
 
     @Override
-    public void updateSlots(DecodeContext context) {
+    public void updateNode(DecodeContext context) {
         for (SlotRef slotRef : requireEncodeSlot) {
             context.updateSlotRefType(slotRef);
         }
