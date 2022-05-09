@@ -18,7 +18,7 @@
 #include "global_dict.h"
 
 #include "vec/columns/column_nullable.h"
-#include "vec/data_types/data_type_dict_encoded_string.h"
+#include "vec/data_types/data_type_number.h"
 #include "vec/data_types/data_type_nullable.h"
 #include "vec/data_types/data_type_string.h"
 
@@ -37,11 +37,11 @@ bool GlobalDict::encode(ColumnWithTypeAndName& col) {
 
     DataTypePtr type;
     if (cardin <= UINT8_MAX) {
-        type = std::make_shared<DataTypeDictEncodedStringUInt8>();
+        type = std::make_shared<DataTypeUInt8>();
     } else if (cardin <= UINT16_MAX) {
-        type = std::make_shared<DataTypeDictEncodedStringUInt16>();
+        type = std::make_shared<DataTypeUInt16>();
     } else {
-        type = std::make_shared<DataTypeDictEncodedStringUInt32>();
+        type = std::make_shared<DataTypeUInt32>();
     }
 
     const ColumnString* column_str;
@@ -125,13 +125,14 @@ bool GlobalDict::decode(ColumnWithTypeAndName& col) {
 
     size_t row_num = col.column->size();
     size_t cardin = cardinality();
+    size_t value_num = dict_value_num();
     auto decoded_column = ColumnString::create();
     DataTypePtr type(std::make_shared<DataTypeString>());
     if (cardin <= UINT8_MAX) {
-        assert(col.type->equals(DataTypeDictEncodedStringUInt8()));
+        assert(col.type->equals(DataTypeUInt8()));
         UInt8* p = (UInt8*)encoded_column_data;
         for (size_t i = 0; i < row_num; ++i) {
-            if (*p >= cardin) {
+            if (*p >= value_num) {
                 return false;
             }
             const StringValue& val = get_value(*p);
@@ -139,10 +140,10 @@ bool GlobalDict::decode(ColumnWithTypeAndName& col) {
             ++p;
         }
     } else if (cardin <= UINT16_MAX) {
-        assert(col.type->equals(DataTypeDictEncodedStringUInt16()));
+        assert(col.type->equals(DataTypeUInt16()));
         UInt16* p = (UInt16*)encoded_column_data;
         for (size_t i = 0; i < row_num; ++i) {
-            if (*p >= cardin) {
+            if (*p >= value_num) {
                 return false;
             }
             const StringValue& val = get_value(*p);
@@ -150,10 +151,10 @@ bool GlobalDict::decode(ColumnWithTypeAndName& col) {
             ++p;
         }
     } else {
-        assert(col.type->equals(DataTypeDictEncodedStringUInt32()));
+        assert(col.type->equals(DataTypeUInt32()));
         UInt32* p = (UInt32*)encoded_column_data;
         for (size_t i = 0; i < row_num; ++i) {
-            if (*p >= cardin) {
+            if (*p >= value_num) {
                 return false;
             }
             const StringValue& val = get_value(*p);

@@ -20,10 +20,10 @@ namespace doris::vectorized {
 
 DecodeNode::DecodeNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs)
         : ExecNode(pool, tnode, descs),
-          _tuple_id(tnode.decode_node.tuple_id),
           _decode_node(tnode.decode_node),
-          _slot_to_dict(tnode.meta_scan_node.slot_to_dict) {
-    _tuple_desc = descs.get_tuple_descriptor(_tuple_id);
+          _slot_to_dict(tnode.decode_node.slot_to_dict) {
+    assert(!_slot_to_dict.empty());
+    _tuple_desc = descs.get_tuple_descriptor(_slot_to_dict.begin()->first);
     assert(_tuple_desc);
 }
 
