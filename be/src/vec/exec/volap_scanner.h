@@ -48,8 +48,6 @@ public:
 
     bool need_to_close() { return _need_to_close; }
     
-    Status get_dict_data(std::set<std::string>& dict_words);
-    
 protected:
     virtual void set_tablet_reader() override;
 

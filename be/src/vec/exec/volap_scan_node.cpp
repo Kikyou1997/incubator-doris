@@ -647,21 +647,4 @@ int VOlapScanNode::_start_scanner_thread_task(RuntimeState* state, int block_per
     return assigned_thread_num;
 }
 
-Status VOlapScanNode::get_dict_data(RuntimeState* state, std::set<std::string>& dict_words){
-    std::vector<OlapScanRange*> scanner_ranges;
-    OlapScanRange totalRange;
-    scanner_ranges.emplace_back(&totalRange);
-    for (auto& scan_range : _scan_ranges) {
-	    VOlapScanner* scanner =
-                    new VOlapScanner(state, this, _olap_scan_node.is_preaggregation,
-                                     _need_agg_finalize, *scan_range, _scanner_mem_tracker);
-        scanner->prepare(*scan_range, scanner_ranges, _olap_filter,
-                                             _bloom_filters_push_down);
-        RETURN_IF_ERROR(scanner->get_dict_data(dict_words));
-        scanner->close(state);
-        delete scanner;
-    }
-    return Status::OK();
-}
-
 } // namespace doris::vectorized
