@@ -150,6 +150,13 @@ Status PlanFragmentExecutor::prepare(const TExecPlanFragmentParams& request,
         }
     }
 
+
+    // set up global dict before _plan->prepare(). 
+    // in vOlapScanNode.prepare, we set global dict to corresponding slotdesc.
+    if (request.__isset.desc_tbl && request.desc_tbl.__isset.globalDict) {
+        _runtime_state->set_global_dicts(request.desc_tbl.globalDict);
+    }
+
     RETURN_IF_ERROR(_plan->prepare(_runtime_state.get()));
     // set scan ranges
     std::vector<ExecNode*> scan_nodes;
@@ -171,10 +178,6 @@ Status PlanFragmentExecutor::prepare(const TExecPlanFragmentParams& request,
     _runtime_state->set_per_fragment_instance_idx(params.sender_id);
     _runtime_state->set_num_per_fragment_instances(params.num_senders);
 
-    // set up global dict
-    if (request.__isset.desc_tbl && request.desc_tbl.__isset.globalDict) {
-        _runtime_state->set_global_dicts(request.desc_tbl.globalDict);
-    }
     // set up sink, if required
     if (request.fragment.__isset.output_sink) {
         RETURN_IF_ERROR(DataSink::create_data_sink(

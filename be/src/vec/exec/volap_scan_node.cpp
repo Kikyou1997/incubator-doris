@@ -37,10 +37,18 @@ VOlapScanNode::VOlapScanNode(ObjectPool* pool, const TPlanNode& tnode, const Des
 Status VOlapScanNode::init(const TPlanNode& tnode, RuntimeState* state) {
     assert(state);
     RETURN_IF_ERROR(OlapScanNode::init(tnode, state));
-    for (const auto& item : _olap_scan_node.slot_to_dict) {
-        _dicts.emplace(item.first, state->get_global_dict(item.first));
-    }
+
     return Status::OK();
+}
+
+Status VOlapScanNode::prepare(RuntimeState* state){
+    RETURN_IF_ERROR(OlapScanNode::prepare(state));
+    //set dict to slotdesc
+    if (_olap_scan_node.__isset.slot_to_dict){
+        for (const auto& item : _olap_scan_node.slot_to_dict) {
+            _dicts.emplace(item.first, state->get_global_dict(item.first));
+        }
+    }
 }
 
 void VOlapScanNode::transfer_thread(RuntimeState* state) {
