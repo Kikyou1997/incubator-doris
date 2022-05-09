@@ -57,7 +57,7 @@ import java.util.Set;
  */
 abstract public class ScanNode extends PlanNode {
     private final static Logger LOG = LogManager.getLogger(ScanNode.class);
-    protected final TupleDescriptor desc;
+    protected TupleDescriptor desc;
     // Use this if partition_prune_algorithm_version is 1.
     protected Map<String, PartitionColumnFilter> columnFilters = Maps.newHashMap();
     // Use this if partition_prune_algorithm_version is 2.

@@ -60,6 +60,7 @@ import org.apache.doris.rewrite.mvrewrite.CountFieldToSum;
 import org.apache.doris.rewrite.mvrewrite.HLLHashToSlotRefRule;
 import org.apache.doris.rewrite.mvrewrite.NDVToHll;
 import org.apache.doris.rewrite.mvrewrite.ToBitmapToSlotRefRule;
+import org.apache.doris.statistics.ColumnDict;
 import org.apache.doris.thrift.TQueryGlobals;
 
 import com.google.common.base.Joiner;
@@ -184,6 +185,10 @@ public class Analyzer {
 
     public long getAutoBroadcastJoinThreshold() {
         return globalState.autoBroadcastJoinThreshold;
+    }
+
+    public void putDict(int slotId, ColumnDict dict) {
+        globalState.descTbl.putDict(slotId, dict);
     }
 
     // state shared between all objects of an Analyzer tree

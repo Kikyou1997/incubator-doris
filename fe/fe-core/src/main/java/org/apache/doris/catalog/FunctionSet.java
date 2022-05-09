@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class FunctionSet<min_initIN9doris_udf12DecimalV2ValEEEvPNS2_15FunctionContextEPT_> {
+
     private static final Logger LOG = LogManager.getLogger(FunctionSet.class);
 
     // All of the registered user functions. The key is the user facing name (e.g. "myUdf"),
@@ -855,6 +856,10 @@ public class FunctionSet<min_initIN9doris_udf12DecimalV2ValEEEvPNS2_15FunctionCo
     public static final String QUANTILE_PERCENT = "quantile_percent";
     public static final String TO_QUANTILE_STATE = "to_quantile_state";
 
+    public static final String COUNT = "count";
+    public static final String MAX = "max";
+    public static final String MIN = "min";
+
     private static final Map<Type, String> ORTHOGONAL_BITMAP_INTERSECT_INIT_SYMBOL =
             ImmutableMap.<Type, String>builder()
                     .put(Type.TINYINT,
@@ -1309,7 +1314,6 @@ public class FunctionSet<min_initIN9doris_udf12DecimalV2ValEEEvPNS2_15FunctionCo
     }
 
 
-    public static final String COUNT = "count";
     public static final String WINDOW_FUNNEL = "window_funnel";
 
     public static final String GLOBAL_DICT = "global_dict";

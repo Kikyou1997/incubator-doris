@@ -170,7 +170,6 @@ public class Planner {
         plannerContext = new PlannerContext(analyzer, queryStmt, queryOptions, statement);
         singleNodePlanner = new SingleNodePlanner(plannerContext);
         PlanNode singleNodePlan = singleNodePlanner.createSingleNodePlan();
-
         if (VectorizedUtil.isVectorized()) {
             singleNodePlan.convertToVectoriezd();
         }
@@ -181,6 +180,9 @@ public class Planner {
             ProjectPlanner projectPlanner = new ProjectPlanner(analyzer);
             projectPlanner.projectSingleNodePlan(queryStmt.getResultExprs(), singleNodePlan);
         }
+
+        DictPlanner dictPlanner = new DictPlanner(plannerContext, analyzer.getDescTbl());
+        singleNodePlan = dictPlanner.plan(singleNodePlan);
 
         if (statement instanceof InsertStmt) {
             InsertStmt insertStmt = (InsertStmt) statement;

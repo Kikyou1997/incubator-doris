@@ -14,10 +14,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-// This file is copied from
-// https://github.com/apache/impala/blob/branch-2.9.0/fe/src/main/java/org/apache/impala/TupleDescriptor.java
-// and modified by Doris
-
 package org.apache.doris.analysis;
 
 import org.apache.doris.catalog.ColumnStats;
@@ -166,6 +162,11 @@ public class TupleDescriptor {
     }
     public boolean hasExplicitAlias() { return hasExplicitAlias_; }
     public String getAlias() { return (aliases_ != null) ? aliases_[0] : null; }
+
+    public String[] getAliases_() {
+        return aliases_;
+    }
+
     public TableName getAliasAsName() {
         return (aliases_ != null) ? new TableName(null, aliases_[0]) : null;
     }

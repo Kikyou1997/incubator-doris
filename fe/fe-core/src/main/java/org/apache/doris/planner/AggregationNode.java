@@ -24,7 +24,14 @@ import org.apache.doris.analysis.AggregateInfo;
 import org.apache.doris.analysis.Analyzer;
 import org.apache.doris.analysis.Expr;
 import org.apache.doris.analysis.FunctionCallExpr;
+import org.apache.doris.analysis.FunctionParams;
+import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleId;
+import org.apache.doris.catalog.Column;
+import org.apache.doris.catalog.FunctionSet;
+import org.apache.doris.common.Id;
 import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.VectorizedUtil;
@@ -43,8 +50,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Aggregation computation.
@@ -59,6 +68,9 @@ public class AggregationNode extends PlanNode {
 
     // If true, use streaming preaggregation algorithm. Not valid if this is a merge agg.
     private boolean useStreamingPreagg;
+
+    private static Set<String> dictAggregationSupportedFunction = Sets.newHashSet(
+        FunctionSet.COUNT, FunctionSet.MAX, FunctionSet.MIN);
 
     /**
      * Create an agg node that is not an intermediate node.
@@ -98,9 +110,9 @@ public class AggregationNode extends PlanNode {
      * as a preaggregation
      */
     public void setIsPreagg(PlannerContext ctx_) {
-        useStreamingPreagg =  ctx_.getQueryOptions().isSetDisableStreamPreaggregations()
-                && !ctx_.getQueryOptions().disable_stream_preaggregations
-                && aggInfo.getGroupingExprs().size() > 0;
+        useStreamingPreagg = ctx_.getQueryOptions().isSetDisableStreamPreaggregations()
+            && !ctx_.getQueryOptions().disable_stream_preaggregations
+            && aggInfo.getGroupingExprs().size() > 0;
     }
 
     @Override
@@ -181,7 +193,7 @@ public class AggregationNode extends PlanNode {
         for (Expr groupingExpr : groupingExprs) {
             long numDistinct = groupingExpr.getNumDistinctValues();
             LOG.debug("grouping expr: " + groupingExpr.toSql() + " #distinct=" + Long.toString(
-                    numDistinct));
+                numDistinct));
             if (numDistinct == -1) {
                 cardinality = -1;
                 break;
@@ -221,7 +233,7 @@ public class AggregationNode extends PlanNode {
             long numDistinct = groupingExpr.getNumDistinctValues();
             // TODO: remove these before 1.0
             LOG.debug("grouping expr: " + groupingExpr.toSql() + " #distinct=" + Long.toString(
-                    numDistinct));
+                numDistinct));
             if (numDistinct == -1) {
                 cardinality = -1;
                 break;
@@ -262,7 +274,7 @@ public class AggregationNode extends PlanNode {
     @Override
     protected String debugString() {
         return MoreObjects.toStringHelper(this).add("aggInfo", aggInfo.debugString()).addValue(
-          super.debugString()).toString();
+            super.debugString()).toString();
     }
 
     @Override
@@ -270,14 +282,14 @@ public class AggregationNode extends PlanNode {
         msg.node_type = TPlanNodeType.AGGREGATION_NODE;
         List<TExpr> aggregateFunctions = Lists.newArrayList();
         // only serialize agg exprs that are being materialized
-        for (FunctionCallExpr e: aggInfo.getMaterializedAggregateExprs()) {
+        for (FunctionCallExpr e : aggInfo.getMaterializedAggregateExprs()) {
             aggregateFunctions.add(e.treeToThrift());
         }
         msg.agg_node =
-          new TAggregationNode(
-                  aggregateFunctions,
-                  aggInfo.getIntermediateTupleId().asInt(),
-                  aggInfo.getOutputTupleId().asInt(), needsFinalize);
+            new TAggregationNode(
+                aggregateFunctions,
+                aggInfo.getIntermediateTupleId().asInt(),
+                aggInfo.getOutputTupleId().asInt(), needsFinalize);
         msg.agg_node.setUseStreamingPreaggregation(useStreamingPreagg);
         List<Expr> groupingExprs = aggInfo.getGroupingExprs();
         if (groupingExprs != null) {
@@ -306,16 +318,16 @@ public class AggregationNode extends PlanNode {
 
         if (aggInfo.getAggregateExprs() != null && aggInfo.getMaterializedAggregateExprs().size() > 0) {
             output.append(detailPrefix + "output: ").append(
-                    getExplainString(aggInfo.getAggregateExprs()) + "\n");
+                getExplainString(aggInfo.getAggregateExprs()) + "\n");
         }
         // TODO: group by can be very long. Break it into multiple lines
         output.append(detailPrefix + "group by: ").append(
-          getExplainString(aggInfo.getGroupingExprs()) + "\n");
+            getExplainString(aggInfo.getGroupingExprs()) + "\n");
         if (!conjuncts.isEmpty()) {
             output.append(detailPrefix + "having: ").append(getExplainString(conjuncts) + "\n");
         }
         output.append(detailPrefix).append(String.format(
-                "cardinality=%s", cardinality)).append("\n");
+            "cardinality=%s", cardinality)).append("\n");
         return output.toString();
     }
 
@@ -348,5 +360,112 @@ public class AggregationNode extends PlanNode {
         Expr.getIds(aggregateExprs, null, aggregateSlotIds);
         result.addAll(aggregateSlotIds);
         return result;
+    }
+
+    @Override
+    public void filterDictSlot(DecodeContext context) {
+        Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
+        List<Expr> groupingExpr = aggInfo.getGroupingExprs();
+        // we should support some scalar functions in the future, such as lower upper sub_str e.g.
+        groupingExpr.forEach(e -> {
+            if (!(e instanceof SlotRef)) {
+                SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
+                return;
+            }
+            SlotRef slotRef = (SlotRef) e;
+            if (slotRef.getColumn() == null) {
+                SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
+            }
+        });
+        findEncodeNeedSlot(context);
+        super.filterDictSlot(context);
+    }
+
+    @Override
+    public void updateSlots(DecodeContext context) {
+        for (SlotRef slotRef : requireEncodeSlot) {
+            context.updateSlotRefType(slotRef);
+        }
+    }
+
+    private void findEncodeNeedSlot(DecodeContext context) {
+
+        findEncodeNeedSlot(aggInfo.getGroupingExprs(), context);
+        for (FunctionCallExpr func : aggInfo.getAggregateExprs()) {
+            String funcName = func.getFnName().getFunction();
+            if (!dictAggregationSupportedFunction.contains(funcName)) {
+                continue;
+            }
+            FunctionParams functionParams = func.getParams();
+            List<Expr> funcParamExprList = functionParams.exprs();
+            if (funcParamExprList == null) {
+                continue;
+            }
+            findEncodeNeedSlot(funcParamExprList, context);
+        }
+    }
+
+    private void findEncodeNeedSlot(List<Expr> funcParamExprList, DecodeContext context) {
+        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
+        for (Expr expr : funcParamExprList) {
+            if (expr instanceof SlotRef) {
+                SlotRef slotRef = (SlotRef) expr;
+                Column column = slotRef.getColumn();
+                // means it's not a colRef
+                if (column == null) {
+                    continue;
+                }
+                int slotId = slotRef.getSlotId().asInt();
+                if (!dictCodableSlot.contains(slotId)) {
+                    continue;
+                }
+                requireEncodeSlot.add(slotRef);
+                context.addEncodeNeededSlot(slotId);
+            }
+        }
+    }
+
+    @Override
+    public void generateDecodeNode(DecodeContext decodeContext) {
+        Set<Integer> originSlotIdSet = decodeContext.getOriginSlotSet();
+        List<Integer> originSlotInOutput = null;
+        if (outputSlotIds != null) {
+            // TODO: should handle all the expr type instead of slotRef only
+            originSlotInOutput = outputSlotIds
+                .stream()
+                .map(id -> decodeContext.getTableDesc().getSlotDescById(id).getSourceExprs())
+                .flatMap(Collection::stream)
+                .filter(e -> e instanceof SlotRef)
+                .map(e -> ((SlotRef) e).getSlotId().asInt())
+                .filter(originSlotIdSet::contains)
+                .collect(Collectors.toList());
+        } else {
+            originSlotInOutput =
+                aggInfo.getOutputTupleDesc().getSlots()
+                    .stream()
+                    .map(SlotDescriptor::getSourceExprs)
+                    .flatMap(Collection::stream)
+                    .filter(e -> e instanceof SlotRef)
+                    .map(e -> ((SlotRef) e).getSlotId().asInt())
+                    .filter(originSlotIdSet::contains)
+                    .collect(Collectors.toList());
+        }
+        if (originSlotInOutput.isEmpty()) {
+            return;
+        }
+        decodeContext.newDecodeNode(this, originSlotInOutput, tupleIds);
+    }
+
+    @Override
+    public void initOutputSlotIds(Set<SlotId> requiredSlotIdSet, Analyzer analyzer) throws NotImplementedException {
+        outputSlotIds = Lists.newArrayList();
+        for (TupleId tupleId : tupleIds) {
+            for (SlotDescriptor slotDescriptor : analyzer.getTupleDesc(tupleId).getSlots()) {
+                if (slotDescriptor.isMaterialized() &&
+                    (requiredSlotIdSet == null || requiredSlotIdSet.contains(slotDescriptor.getId()))) {
+                    outputSlotIds.add(slotDescriptor.getId());
+                }
+            }
+        }
     }
 }

@@ -22,11 +22,14 @@ package org.apache.doris.analysis;
 
 import org.apache.doris.catalog.Table;
 import org.apache.doris.common.IdGenerator;
+import org.apache.doris.statistics.ColumnDict;
+import org.apache.doris.thrift.TColumnDict;
 import org.apache.doris.thrift.TDescriptorTable;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import org.apache.doris.thrift.TGlobalDict;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,6 +38,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Repository for tuple (and slot) descriptors.
@@ -51,6 +55,8 @@ public class DescriptorTable {
     private final IdGenerator<TupleId> tupleIdGenerator_ = TupleId.createGenerator();
     private final IdGenerator<SlotId> slotIdGenerator_ = SlotId.createGenerator();
     private final HashMap<SlotId, SlotDescriptor> slotDescs = Maps.newHashMap();
+    private final Map<Integer, ColumnDict> dictIdToColumnDict = Maps.newHashMap();
+    private final Map<Integer, Integer> slotIdToDict = Maps.newHashMap();
 
     public DescriptorTable() {
     }
@@ -167,6 +173,14 @@ public class DescriptorTable {
         for (Table tbl : referencedTbls) {
             result.addToTableDescriptors(tbl.toThrift());
         }
+        TGlobalDict tGlobalDict = new TGlobalDict();
+        Map<Integer, TColumnDict> thriftMap = new HashMap<>();
+        for (Map.Entry<Integer, ColumnDict> entry : dictIdToColumnDict.entrySet()) {
+            thriftMap.put(entry.getKey(), entry.getValue().toThrift());
+        }
+        tGlobalDict.dicts = thriftMap;
+        tGlobalDict.slot_dicts = slotIdToDict;
+        result.globalDict = tGlobalDict;
         return result;
     }
 
@@ -193,5 +207,21 @@ public class DescriptorTable {
             out.append(desc.getExplainString() + "\n");
         }
         return out.toString();
+    }
+
+    public void putDict(int dictId, ColumnDict dict) {
+        this.dictIdToColumnDict.put(dictId, dict);
+    }
+
+    public Map<Integer, ColumnDict> getDictIdToColumnDict() {
+        return dictIdToColumnDict;
+    }
+
+    public void addSlotToDict(int slotId, int dictId) {
+        slotIdToDict.put(slotId, dictId);
+    }
+
+    public SlotDescriptor getSlotDescById(SlotId slotId) {
+        return slotDescs.get(slotId);
     }
 }

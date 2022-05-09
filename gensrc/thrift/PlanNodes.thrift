@@ -296,6 +296,7 @@ struct TMiniLoadEtlFunction {
   2: required i32 param_column_index
 }
 
+
 struct TCsvScanNode {
   1: required Types.TTupleId tuple_id
   2: required list<string> file_paths
@@ -341,8 +342,7 @@ struct TMetaScanNode {
 
 struct TDecodeNode {
     //slot_id to global_dict_id
-    1: required Types.TTupleId tuple_id
-    2: required map<Types.TSlotId,i32> slot_to_dict
+    1: required map<Types.TSlotId,i32> slot_to_dict
 }
 
 struct TOlapScanNode {
@@ -353,8 +353,7 @@ struct TOlapScanNode {
   5: optional string sort_column
   6: optional Types.TKeysType keyType
   7: optional string table_name
-  //slot_id to global_dict_id
-  8: optional map<Types.TSlotId,i32> slot_to_dict
+  8: optional map<Types.TSlotId, i32> slot_to_dict
 }
 
 struct TEqJoinCondition {
@@ -796,6 +795,7 @@ struct TPlanNode {
   35: optional TOdbcScanNode odbc_scan_node
   // Runtime filters assigned to this plan node, exist in HashJoinNode and ScanNode
   36: optional list<TRuntimeFilterDesc> runtime_filters
+  37: optional TDecodeNode decode_node
 
   // Use in vec exec engine
   40: optional Exprs.TExpr vconjunct
@@ -804,9 +804,6 @@ struct TPlanNode {
 
   // output column
   42: optional list<Types.TSlotId> output_slot_ids
-
-  // decode dict
-  43: optional TDecodeNode decode_node
 }
 
 // A flattened representation of a tree of PlanNodes, obtained by depth-first

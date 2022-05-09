@@ -23,6 +23,8 @@ package org.apache.doris.analysis;
 import org.apache.doris.common.Id;
 import org.apache.doris.common.IdGenerator;
 
+import java.util.Set;
+
 public class SlotId extends Id<SlotId> {
     public SlotId(int id) {
         super(id);
@@ -35,5 +37,15 @@ public class SlotId extends Id<SlotId> {
             @Override
             public SlotId getMaxId() { return new SlotId(nextId_ - 1); }
         };
+    }
+
+    public static void getAllSlotIdFromExpr(Expr expr, Set<Integer> slotRefSet) {
+        if (expr instanceof SlotRef) {
+            SlotRef slotRef = (SlotRef) expr;
+            slotRefSet.add(slotRef.getSlotId().asInt());
+        }
+        for (Expr child : expr.getChildren()) {
+            getAllSlotIdFromExpr(child, slotRefSet);
+        }
     }
 }
