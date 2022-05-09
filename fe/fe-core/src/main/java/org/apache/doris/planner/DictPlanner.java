@@ -26,7 +26,6 @@ import org.apache.doris.statistics.IDictManager;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 public class DictPlanner {
 
@@ -123,7 +122,6 @@ public class DictPlanner {
                     continue;
                 }
                 int slotId = slotDesc.getId().asInt();
-                context.addDictCodableSlot(tableId, slotId);
                 context.addAvailableDict(slotId, columnDict);
             }
         }
@@ -131,7 +129,7 @@ public class DictPlanner {
         for (PlanNode planNode : node.getChildren()) {
             findDictCodableSlot(planNode);
         }
-
     }
+
 
 }

@@ -18,11 +18,15 @@
 package org.apache.doris.planner;
 
 import org.apache.doris.analysis.DescriptorTable;
+import org.apache.doris.analysis.Expr;
+import org.apache.doris.analysis.FunctionCallExpr;
 import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.SlotId;
 import org.apache.doris.analysis.SlotRef;
 import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.analysis.TupleId;
+import org.apache.doris.catalog.Column;
+import org.apache.doris.catalog.FunctionSet;
 import org.apache.doris.catalog.Type;
 import org.apache.doris.statistics.ColumnDict;
 
@@ -34,8 +38,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class DecodeContext {
-
-    private Map<Long, Set<Integer>> tableIdToDictCodableSlotSet = new HashMap<>();
 
     private Map<Integer, ColumnDict> slotIdToColumnDict = new HashMap<>();
 
@@ -58,11 +60,6 @@ public class DecodeContext {
     public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor) {
         this.ctx_ = ctx_;
         this.tableDescriptor = tableDescriptor;
-    }
-
-    public void addDictCodableSlot(long tableId, int slotId) {
-        Set<Integer> slotSet = tableIdToDictCodableSlotSet.getOrDefault(tableId, new HashSet<>());
-        slotSet.add(slotId);
     }
 
     public void addAvailableDict(int slotId, ColumnDict dict) {
@@ -160,5 +157,36 @@ public class DecodeContext {
 
     public DescriptorTable getTableDesc() {
         return tableDescriptor;
+    }
+
+    public void getDecodeRequiredSlotIdOfExpr(Expr expr, List<Integer> slotIdList) {
+        if (expr instanceof SlotRef) {
+            SlotRef slotRef = (SlotRef) expr;
+            SlotDescriptor slotDesc = slotRef.getDesc();
+            List<Expr> sourceExprList = slotDesc.getSourceExprs();
+            if (!sourceExprList.isEmpty()) {
+                for (Expr sourceExpr : sourceExprList) {
+                    getDecodeRequiredSlotIdOfExpr(sourceExpr, slotIdList);
+                }
+                return;
+            }
+            Column column = slotRef.getColumn();
+            int slotId = slotRef.getSlotId().asInt();
+            if (column != null && slotIdToDictSlotId.containsKey(slotId)) {
+                slotIdList.add(slotId);
+                return;
+            }
+         } else if (expr instanceof FunctionCallExpr) {
+            FunctionCallExpr functionCallExpr = (FunctionCallExpr) expr;
+            String functionName = functionCallExpr.getFnName().getFunction();
+            if (FunctionSet.DICT_SUPPORT_FUNC_SET.contains(functionName)) {
+                return;
+            }
+        }
+        List<Expr> children = expr.getChildren();
+        for (Expr child : children) {
+            getDecodeRequiredSlotIdOfExpr(child, slotIdList);
+        }
+
     }
 }

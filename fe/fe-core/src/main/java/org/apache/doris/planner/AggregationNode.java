@@ -435,8 +435,12 @@ public class AggregationNode extends PlanNode {
                 .stream()
                 .map(id -> decodeContext.getTableDesc().getSlotDescById(id).getSourceExprs())
                 .flatMap(Collection::stream)
-                .filter(e -> e instanceof SlotRef)
-                .map(e -> ((SlotRef) e).getSlotId().asInt())
+                .map(e -> {
+                    List<Integer> slotIdList = new ArrayList<>();
+                    decodeContext.getDecodeRequiredSlotIdOfExpr(e, slotIdList);
+                    return slotIdList;
+                })
+                .flatMap(Collection::stream)
                 .filter(originSlotIdSet::contains)
                 .collect(Collectors.toList());
         } else {

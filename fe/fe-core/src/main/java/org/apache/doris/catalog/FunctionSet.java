@@ -17,6 +17,7 @@
 
 package org.apache.doris.catalog;
 
+import com.google.common.collect.Sets;
 import org.apache.doris.analysis.ArithmeticExpr;
 import org.apache.doris.analysis.BinaryPredicate;
 import org.apache.doris.analysis.CastExpr;
@@ -1312,6 +1313,8 @@ public class FunctionSet<min_initIN9doris_udf12DecimalV2ValEEEvPNS2_15FunctionCo
                         scalarFunction.getReturnType(), scalarFunction.isUserVisible(),
                         scalarFunction.getNullableMode()));
     }
+
+    public static final Set<String> DICT_SUPPORT_FUNC_SET = Sets.newHashSet("COUNT");
 
 
     public static final String WINDOW_FUNNEL = "window_funnel";

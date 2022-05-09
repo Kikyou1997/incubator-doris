@@ -38,7 +38,7 @@ import org.apache.doris.thrift.TPlanNode;
 import org.apache.doris.thrift.TPlanNodeType;
 
 public class DecodeNode extends PlanNode {
-    private Map<Integer, Integer> slotIdToDictId = new HashMap();
+    private Map<Integer, Integer> slotIdToDictId;
 
     private static final String NAME = "Decode Node";
 
