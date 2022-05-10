@@ -831,7 +831,7 @@ public class EditLog {
             LOG.warn("[INCONSISTENT META] replay failed {}: {}", journal, e.getMessage(), e);
         } catch (Exception e) {
             LOG.error("Operation Type {}", opCode, e);
-            System.exit(-1);
+//            System.exit(-1);
         }
     }
 
@@ -875,7 +875,7 @@ public class EditLog {
         } catch (Throwable t) {
             // Throwable contains all Exception and Error, such as IOException and OutOfMemoryError
             LOG.error("Fatal Error : write stream Exception", t);
-            System.exit(-1);
+//            System.exit(-1);
         }
 
         // get a new transactionId

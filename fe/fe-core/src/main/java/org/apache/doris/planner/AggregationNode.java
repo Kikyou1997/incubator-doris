@@ -34,6 +34,7 @@ import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
 import org.apache.doris.catalog.Type;
+import org.apache.doris.common.AnalysisException;
 import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.VectorizedUtil;
@@ -66,7 +67,7 @@ import java.util.stream.Collectors;
  */
 public class AggregationNode extends PlanNode {
     private final static Logger LOG = LogManager.getLogger(AggregationNode.class);
-    private final AggregateInfo aggInfo;
+    private AggregateInfo aggInfo;
 
     // Set to true if this aggregation node needs to run the Finalize step. This
     // node is the root node of a distributed aggregation.
@@ -392,6 +393,9 @@ public class AggregationNode extends PlanNode {
         for (SlotRef slotRef : requireEncodeSlotToDictColumn.keySet()) {
             context.updateSlotRefType(slotRef);
         }
+        for (SlotRef slotRef : typeChangedSlotRef) {
+            slotRef.setType(Type.INT);
+        }
         // tupleIds in this node will always be 1
         TupleId tupleId = tupleIds.get(0);
         TupleDescriptor tupleDesc = context.getTableDesc().getTupleDesc(tupleId);
@@ -415,18 +419,35 @@ public class AggregationNode extends PlanNode {
                 }
             }
         }
-        TupleDescriptor newTupleDesc = context.generateTupleDesc(tupleId);
-        originTupleIds = tupleIds;
-        tupleIds = new ArrayList<>();
-        tupleIds.add(newTupleDesc.getId());
-        aggInfo.setOutputTupleDesc_(newTupleDesc);
-        List<SlotDescriptor> slotDescList = newTupleDesc.getSlots();
-        for (Map.Entry<Integer, Integer> entry: slotOffsetToDictId.entrySet()) {
-            SlotDescriptor slotDesc = slotDescList.get(entry.getKey());
-            slotDesc.setType(Type.INT);
-            int slotId = slotDesc.getId().asInt();
-            context.addSlotToDictSlot(slotId, entry.getValue());
-            context.getTableDesc().addSlotToDict(slotId, entry.getValue());
+        try {
+            originTupleIds = tupleIds;
+            aggInfo = AggregateInfo.create(
+                aggInfo.getGroupingExprs(),
+                aggInfo.getAggregateExprs(),
+                null,
+                context.getAnalyzer());
+            AggregateInfo mergeAggInfo = aggInfo.getMergeAggInfo();
+            List<Expr> exprList = mergeAggInfo.getGroupingExprs();
+            for (Expr expr : exprList) {
+                if (expr instanceof SlotRef) {
+                    SlotRef slotRef = (SlotRef) expr;
+                    SlotDescriptor slotDescriptor = slotRef.getDesc();
+                    List<Expr> sourceExprList = slotDescriptor.getSourceExprs();
+                    if (sourceExprList.size() == 1) {
+                        Expr sourceExpr = sourceExprList.get(0);
+                        if (sourceExpr instanceof  SlotRef) {
+                            SlotRef sourceSlotRef = (SlotRef) sourceExpr;
+                            ColumnDict dict = requireEncodeSlotToDictColumn.get(sourceSlotRef);
+                            if (dict != null) {
+
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (AnalysisException e) {
+            throw new RuntimeException("Failed to create new AggInfo", e);
         }
     }
 
@@ -457,19 +478,28 @@ public class AggregationNode extends PlanNode {
     private void findEncodeNeedSlot(List<Expr> exprList, DecodeContext context) {
         for (Expr expr : exprList) {
             if (expr instanceof SlotRef) {
-                List<SlotRef> linkedSlotRef = new ArrayList<>();
+                Map<SlotId, SlotId> linkedSlotRef = Maps.newHashMap();
+                Map<SlotDescriptor, SlotRef> slotDescToRef = Maps.newHashMap();
                 Queue<SlotRef> slotRefQueue = new LinkedList<>();
                 slotRefQueue.add((SlotRef) expr);
                 while (!slotRefQueue.isEmpty()) {
                     SlotRef slotRef = slotRefQueue.poll();
+                    slotDescToRef.put(slotRef.getDesc(), slotRef);
                     Column column = slotRef.getColumn();
                     // means it's a colRef
                     if (column != null) {
-                        int slotId = slotRef.getSlotId().asInt();
-                        ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
+                        SlotId slotId = slotRef.getSlotId();
+                        ColumnDict columnDict = context.getColumnDictBySlotId(slotId.asInt());
                         if (columnDict != null) {
                             requireEncodeSlotToDictColumn.put(slotRef, columnDict);
-                            context.addEncodeNeededSlot(slotId);
+                            context.addEncodeNeededSlot(slotId.asInt());
+                            SlotId refThisSlotId = linkedSlotRef.get(slotId);
+                            while (refThisSlotId != null) {
+                                SlotDescriptor slotDescriptor = context.getTableDesc().getSlotDesc(refThisSlotId);
+                                SlotRef refOfThisSlot = slotDescToRef.get(slotDescriptor);
+                                typeChangedSlotRef.add(refOfThisSlot);
+                                refThisSlotId = linkedSlotRef.get(refOfThisSlot.getSlotId());
+                            }
                         }
                         continue;
                     }
@@ -477,7 +507,11 @@ public class AggregationNode extends PlanNode {
                     slotDesc.getSourceExprs()
                         .stream()
                         .filter(e -> e instanceof SlotRef
-                        ).forEach(e -> slotRefQueue.add((SlotRef) e));
+                        ).forEach(e -> {
+                            SlotRef cur = (SlotRef) e;
+                            slotRefQueue.add(cur);
+                            linkedSlotRef.put(cur.getSlotId(), slotRef.getSlotId());
+                        });
                 }
             }
         }
@@ -485,7 +519,7 @@ public class AggregationNode extends PlanNode {
 
     @Override
     public void generateDecodeNode(DecodeContext decodeContext) {
-        Set<Integer> originSlotIdSet = decodeContext.getOriginSlotSet();
+        Set<Integer> originSlotIdSet = decodeContext.getDictCodableSlot();
         List<Integer> originSlotInOutput = null;
         if (outputSlotIds != null) {
             // TODO: should handle all the expr type instead of slotRef only

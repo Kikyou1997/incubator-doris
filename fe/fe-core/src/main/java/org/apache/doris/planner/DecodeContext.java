@@ -17,14 +17,7 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.DescriptorTable;
-import org.apache.doris.analysis.Expr;
-import org.apache.doris.analysis.FunctionCallExpr;
-import org.apache.doris.analysis.SlotDescriptor;
-import org.apache.doris.analysis.SlotId;
-import org.apache.doris.analysis.SlotRef;
-import org.apache.doris.analysis.TupleDescriptor;
-import org.apache.doris.analysis.TupleId;
+import org.apache.doris.analysis.*;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
 import org.apache.doris.catalog.Type;
@@ -51,21 +44,20 @@ public class DecodeContext {
 
     private final DescriptorTable tableDescriptor;
 
+    private final Analyzer analyzer;
+
     private final PlannerContext ctx_;
 
     private final Map<PlanNode, DecodeNode> childToDecodeNode = new HashMap<>();
 
-    public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor) {
+    public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor, Analyzer analyzer) {
         this.ctx_ = ctx_;
         this.tableDescriptor = tableDescriptor;
+        this.analyzer = analyzer;
     }
 
     public void addAvailableDict(int slotId, ColumnDict dict) {
         slotIdToColumnDict.put(slotId, dict);
-    }
-
-    public Set<Integer> getOriginSlotSet() {
-        return slotIdToColumnDict.keySet();
     }
 
     public ColumnDict getColumnDictBySlotId(int slotId) {
@@ -79,7 +71,6 @@ public class DecodeContext {
     public Set<Integer> getAllEncodeNeededSlot() {
         return encodeNeededSlotSet;
     }
-
 
 
     public Set<Integer> getDictOptimizationDisabledSlot() {
@@ -103,7 +94,10 @@ public class DecodeContext {
     }
 
     public SlotDescriptor getDictSlotDesc(int slotId) {
-        int dictSlotId = slotIdToDictSlotId.get(slotId);
+        Integer dictSlotId = slotIdToDictSlotId.get(slotId);
+            if (dictSlotId == null) {
+                return null;
+            }
         return tableDescriptor.getSlotDesc(new SlotId(dictSlotId));
     }
 
@@ -184,6 +178,9 @@ public class DecodeContext {
         for (Expr child : children) {
             getDecodeRequiredSlotIdOfExpr(child, slotIdList);
         }
+    }
 
+    public Analyzer getAnalyzer() {
+        return analyzer;
     }
 }

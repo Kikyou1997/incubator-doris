@@ -17,6 +17,7 @@
 
 package org.apache.doris.planner;
 
+import org.apache.doris.analysis.Analyzer;
 import org.apache.doris.analysis.DescriptorTable;
 import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.TupleDescriptor;
@@ -31,8 +32,8 @@ public class DictPlanner {
 
     private final DecodeContext context;
 
-    public DictPlanner(PlannerContext ctx, DescriptorTable tableDesc) {
-        this.context = new DecodeContext(ctx, tableDesc);
+    public DictPlanner(PlannerContext ctx, DescriptorTable tableDesc, Analyzer analyzer) {
+        this.context = new DecodeContext(ctx, tableDesc, analyzer);
     }
 
     public PlanNode plan(PlanNode plan) {

@@ -138,8 +138,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
 
     protected Map<SlotRef, ColumnDict> requireEncodeSlotToDictColumn = Maps.newHashMap();
 
-    // different slotRef may have same hashCode cause it's value is based on slotDesc
-    protected List<SlotRef> requireEncodeSlotList = Lists.newArrayList();
+    protected List<SlotRef> typeChangedSlotRef = Lists.newArrayList();
 
     protected PlanNode(PlanNodeId id, ArrayList<TupleId> tupleIds, String planNodeName) {
         this.id = id;

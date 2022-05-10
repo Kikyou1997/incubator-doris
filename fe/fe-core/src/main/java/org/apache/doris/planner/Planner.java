@@ -181,7 +181,7 @@ public class Planner {
             projectPlanner.projectSingleNodePlan(queryStmt.getResultExprs(), singleNodePlan);
         }
 
-        DictPlanner dictPlanner = new DictPlanner(plannerContext, analyzer.getDescTbl());
+        DictPlanner dictPlanner = new DictPlanner(plannerContext, analyzer.getDescTbl(), analyzer);
         singleNodePlan = dictPlanner.plan(singleNodePlan);
 
         if (statement instanceof InsertStmt) {
