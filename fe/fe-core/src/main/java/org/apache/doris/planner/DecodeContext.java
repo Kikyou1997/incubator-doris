@@ -17,14 +17,7 @@
 
 package org.apache.doris.planner;
 
-import org.apache.doris.analysis.DescriptorTable;
-import org.apache.doris.analysis.Expr;
-import org.apache.doris.analysis.FunctionCallExpr;
-import org.apache.doris.analysis.SlotDescriptor;
-import org.apache.doris.analysis.SlotId;
-import org.apache.doris.analysis.SlotRef;
-import org.apache.doris.analysis.TupleDescriptor;
-import org.apache.doris.analysis.TupleId;
+import org.apache.doris.analysis.*;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
 import org.apache.doris.catalog.Type;
@@ -43,6 +36,8 @@ public class DecodeContext {
 
     private final Map<Integer, Integer> slotIdToDictSlotId = new HashMap<>();
 
+    private final Map<Integer, ColumnDict> dictSlotIdToColumnDict = new HashMap<>();
+
     private final  Set<Integer> encodeNeededSlotSet = new HashSet<>();
 
     private boolean needEncode;
@@ -51,21 +46,20 @@ public class DecodeContext {
 
     private final DescriptorTable tableDescriptor;
 
+    private final Analyzer analyzer;
+
     private final PlannerContext ctx_;
 
     private final Map<PlanNode, DecodeNode> childToDecodeNode = new HashMap<>();
 
-    public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor) {
+    public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor, Analyzer analyzer) {
         this.ctx_ = ctx_;
         this.tableDescriptor = tableDescriptor;
+        this.analyzer = analyzer;
     }
 
     public void addAvailableDict(int slotId, ColumnDict dict) {
         slotIdToColumnDict.put(slotId, dict);
-    }
-
-    public Set<Integer> getOriginSlotSet() {
-        return slotIdToColumnDict.keySet();
     }
 
     public ColumnDict getColumnDictBySlotId(int slotId) {
@@ -79,7 +73,6 @@ public class DecodeContext {
     public Set<Integer> getAllEncodeNeededSlot() {
         return encodeNeededSlotSet;
     }
-
 
 
     public Set<Integer> getDictOptimizationDisabledSlot() {
@@ -103,7 +96,10 @@ public class DecodeContext {
     }
 
     public SlotDescriptor getDictSlotDesc(int slotId) {
-        int dictSlotId = slotIdToDictSlotId.get(slotId);
+        Integer dictSlotId = slotIdToDictSlotId.get(slotId);
+            if (dictSlotId == null) {
+                return null;
+            }
         return tableDescriptor.getSlotDesc(new SlotId(dictSlotId));
     }
 
@@ -116,10 +112,9 @@ public class DecodeContext {
 
     public DecodeNode newDecodeNode(PlanNode child, List<Integer> originSlotIdSet, ArrayList<TupleId> output) {
         Map<Integer, Integer> slotIdToDictId = new HashMap<>();
-        for (Integer originSlotId : originSlotIdSet) {
-            Integer dictSlotId = slotIdToDictSlotId.get(originSlotId);
-            ColumnDict columnDict = slotIdToColumnDict.get(originSlotId);
-            slotIdToDictId.put(dictSlotId, columnDict.getId());
+        for (Integer slotId : originSlotIdSet) {
+            ColumnDict columnDict = slotIdToColumnDict.get(slotId);
+            slotIdToDictId.put(slotId, columnDict.getId());
             tableDescriptor.putDict(columnDict.getId(), columnDict);
         }
         DecodeNode decodeNode =  new DecodeNode(ctx_.getNextNodeId(), child, slotIdToDictId, output);
@@ -184,6 +179,18 @@ public class DecodeContext {
         for (Expr child : children) {
             getDecodeRequiredSlotIdOfExpr(child, slotIdList);
         }
+    }
 
+    public Analyzer getAnalyzer() {
+        return analyzer;
+    }
+
+    public void mapDictSlotToDict(int dictSlotId, int slotId) {
+        ColumnDict columnDict = slotIdToColumnDict.get(slotId);
+        dictSlotIdToColumnDict.put(dictSlotId, columnDict);
+    }
+
+    public ColumnDict getColumnDictByDictSlotId(int id) {
+        return dictSlotIdToColumnDict.get(id);
     }
 }

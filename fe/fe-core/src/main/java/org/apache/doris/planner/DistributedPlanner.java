@@ -252,6 +252,7 @@ public class DistributedPlanner {
         // set the child explicitly, an ExchangeNode might have been inserted
         // (whereas selectNode.child[0] would point to the original child)
         decodeNode.setChild(0, fragment.getPlanRoot());
+        decodeNode.numInstances = fragment.getPlanRoot().getNumInstances();
         fragment.setPlanRoot(decodeNode);
         return fragment;
     }
