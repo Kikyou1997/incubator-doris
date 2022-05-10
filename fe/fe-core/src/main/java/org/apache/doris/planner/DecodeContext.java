@@ -36,6 +36,8 @@ public class DecodeContext {
 
     private final Map<Integer, Integer> slotIdToDictSlotId = new HashMap<>();
 
+    private final Map<Integer, ColumnDict> dictSlotIdToColumnDict = new HashMap<>();
+
     private final  Set<Integer> encodeNeededSlotSet = new HashSet<>();
 
     private boolean needEncode;
@@ -110,10 +112,9 @@ public class DecodeContext {
 
     public DecodeNode newDecodeNode(PlanNode child, List<Integer> originSlotIdSet, ArrayList<TupleId> output) {
         Map<Integer, Integer> slotIdToDictId = new HashMap<>();
-        for (Integer originSlotId : originSlotIdSet) {
-            Integer dictSlotId = slotIdToDictSlotId.get(originSlotId);
-            ColumnDict columnDict = slotIdToColumnDict.get(originSlotId);
-            slotIdToDictId.put(dictSlotId, columnDict.getId());
+        for (Integer slotId : originSlotIdSet) {
+            ColumnDict columnDict = slotIdToColumnDict.get(slotId);
+            slotIdToDictId.put(slotId, columnDict.getId());
             tableDescriptor.putDict(columnDict.getId(), columnDict);
         }
         DecodeNode decodeNode =  new DecodeNode(ctx_.getNextNodeId(), child, slotIdToDictId, output);
@@ -182,5 +183,14 @@ public class DecodeContext {
 
     public Analyzer getAnalyzer() {
         return analyzer;
+    }
+
+    public void mapDictSlotToDict(int dictSlotId, int slotId) {
+        ColumnDict columnDict = slotIdToColumnDict.get(slotId);
+        dictSlotIdToColumnDict.put(dictSlotId, columnDict);
+    }
+
+    public ColumnDict getColumnDictByDictSlotId(int id) {
+        return dictSlotIdToColumnDict.get(id);
     }
 }

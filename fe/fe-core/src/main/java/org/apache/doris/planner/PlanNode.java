@@ -138,8 +138,6 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
 
     protected Map<SlotRef, ColumnDict> requireEncodeSlotToDictColumn = Maps.newHashMap();
 
-    protected List<SlotRef> typeChangedSlotRef = Lists.newArrayList();
-
     protected PlanNode(PlanNodeId id, ArrayList<TupleId> tupleIds, String planNodeName) {
         this.id = id;
         this.limit = -1;

@@ -33,7 +33,6 @@ import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
-import org.apache.doris.catalog.Type;
 import org.apache.doris.common.AnalysisException;
 import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.UserException;
@@ -393,9 +392,6 @@ public class AggregationNode extends PlanNode {
         for (SlotRef slotRef : requireEncodeSlotToDictColumn.keySet()) {
             context.updateSlotRefType(slotRef);
         }
-        for (SlotRef slotRef : typeChangedSlotRef) {
-            slotRef.setType(Type.INT);
-        }
         // tupleIds in this node will always be 1
         TupleId tupleId = tupleIds.get(0);
         TupleDescriptor tupleDesc = context.getTableDesc().getTupleDesc(tupleId);
@@ -426,26 +422,20 @@ public class AggregationNode extends PlanNode {
                 aggInfo.getAggregateExprs(),
                 null,
                 context.getAnalyzer());
-            AggregateInfo mergeAggInfo = aggInfo.getMergeAggInfo();
-            List<Expr> exprList = mergeAggInfo.getGroupingExprs();
-            for (Expr expr : exprList) {
-                if (expr instanceof SlotRef) {
-                    SlotRef slotRef = (SlotRef) expr;
-                    SlotDescriptor slotDescriptor = slotRef.getDesc();
-                    List<Expr> sourceExprList = slotDescriptor.getSourceExprs();
-                    if (sourceExprList.size() == 1) {
-                        Expr sourceExpr = sourceExprList.get(0);
-                        if (sourceExpr instanceof  SlotRef) {
-                            SlotRef sourceSlotRef = (SlotRef) sourceExpr;
-                            ColumnDict dict = requireEncodeSlotToDictColumn.get(sourceSlotRef);
-                            if (dict != null) {
-
-                            }
+            tupleIds = aggInfo.getOutputTupleId().asList();
+            TupleDescriptor newOutputTupleDesc = aggInfo.getOutputTupleDesc();
+            for (SlotDescriptor slotDescriptor : newOutputTupleDesc.getSlots()) {
+                for (Expr expr: slotDescriptor.getSourceExprs()) {
+                    if (expr instanceof SlotRef) {
+                        SlotRef slotRef = (SlotRef) expr;
+                        int slotId = slotRef.getSlotId().asInt();
+                        ColumnDict columnDict = context.getColumnDictByDictSlotId(slotId);
+                        if (columnDict != null) {
+                            context.addAvailableDict(slotDescriptor.getId().asInt(), columnDict);
                         }
                     }
                 }
             }
-
         } catch (AnalysisException e) {
             throw new RuntimeException("Failed to create new AggInfo", e);
         }
@@ -478,28 +468,19 @@ public class AggregationNode extends PlanNode {
     private void findEncodeNeedSlot(List<Expr> exprList, DecodeContext context) {
         for (Expr expr : exprList) {
             if (expr instanceof SlotRef) {
-                Map<SlotId, SlotId> linkedSlotRef = Maps.newHashMap();
-                Map<SlotDescriptor, SlotRef> slotDescToRef = Maps.newHashMap();
+                List<SlotRef> linkedSlotRef = new ArrayList<>();
                 Queue<SlotRef> slotRefQueue = new LinkedList<>();
                 slotRefQueue.add((SlotRef) expr);
                 while (!slotRefQueue.isEmpty()) {
                     SlotRef slotRef = slotRefQueue.poll();
-                    slotDescToRef.put(slotRef.getDesc(), slotRef);
                     Column column = slotRef.getColumn();
                     // means it's a colRef
                     if (column != null) {
-                        SlotId slotId = slotRef.getSlotId();
-                        ColumnDict columnDict = context.getColumnDictBySlotId(slotId.asInt());
+                        int slotId = slotRef.getSlotId().asInt();
+                        ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
                         if (columnDict != null) {
                             requireEncodeSlotToDictColumn.put(slotRef, columnDict);
-                            context.addEncodeNeededSlot(slotId.asInt());
-                            SlotId refThisSlotId = linkedSlotRef.get(slotId);
-                            while (refThisSlotId != null) {
-                                SlotDescriptor slotDescriptor = context.getTableDesc().getSlotDesc(refThisSlotId);
-                                SlotRef refOfThisSlot = slotDescToRef.get(slotDescriptor);
-                                typeChangedSlotRef.add(refOfThisSlot);
-                                refThisSlotId = linkedSlotRef.get(refOfThisSlot.getSlotId());
-                            }
+                            context.addEncodeNeededSlot(slotId);
                         }
                         continue;
                     }
@@ -507,11 +488,7 @@ public class AggregationNode extends PlanNode {
                     slotDesc.getSourceExprs()
                         .stream()
                         .filter(e -> e instanceof SlotRef
-                        ).forEach(e -> {
-                            SlotRef cur = (SlotRef) e;
-                            slotRefQueue.add(cur);
-                            linkedSlotRef.put(cur.getSlotId(), slotRef.getSlotId());
-                        });
+                        ).forEach(e -> slotRefQueue.add((SlotRef) e));
                 }
             }
         }
@@ -537,17 +514,12 @@ public class AggregationNode extends PlanNode {
                 .collect(Collectors.toList());
         } else {
             originSlotInOutput =
-                decodeContext
-                    .getTableDesc()
-                    .getTupleDesc(originTupleIds.get(0))
-                    .getSlots()
+                    aggInfo.getOutputTupleDesc().getSlots()
                     .stream()
-                    .map(SlotDescriptor::getSourceExprs)
-                    .flatMap(Collection::stream)
-                    .filter(e -> e instanceof SlotRef)
-                    .map(e -> ((SlotRef) e).getSlotId().asInt())
+                    .map(d -> d.getId().asInt())
                     .filter(originSlotIdSet::contains)
                     .collect(Collectors.toList());
+
         }
         if (originSlotInOutput.isEmpty()) {
             return;

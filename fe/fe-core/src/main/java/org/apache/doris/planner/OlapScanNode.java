@@ -973,6 +973,7 @@ public class OlapScanNode extends ScanNode {
             slotIdToDictId.put(newSlotId ,dictId);
             context.getTableDesc().addSlotToDict(newSlotId, dictId);
             context.addSlotToDictSlot(slotId, newSlotId);
+            context.mapDictSlotToDict(newSlotId, slotId);
         }
     }
 
