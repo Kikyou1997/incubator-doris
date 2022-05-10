@@ -187,10 +187,6 @@ public class Analyzer {
         return globalState.autoBroadcastJoinThreshold;
     }
 
-    public void putDict(int slotId, ColumnDict dict) {
-        globalState.descTbl.putDict(slotId, dict);
-    }
-
     // state shared between all objects of an Analyzer tree
     // TODO: Many maps here contain properties about tuples, e.g., whether
     // a tuple is outer/semi joined, etc. Remove the maps in favor of making

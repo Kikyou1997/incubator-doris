@@ -2228,7 +2228,9 @@ public class QueryPlanTest {
         String sql5 = "SELECT l_shipmode, COUNT(l_shipmode) FROM lineitem GROUP BY  l_shipmode";
         String plan5 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql5);
         Assert.assertTrue(plan5.contains("Decode"));
-
+        connectContext.getSessionVariable().setDictTest(false);
+        String plan6 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql5);
+        Assert.assertFalse(plan6.contains("Decode"));
 
     }
 }

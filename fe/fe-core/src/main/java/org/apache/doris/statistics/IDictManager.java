@@ -19,6 +19,7 @@ package org.apache.doris.statistics;
 
 import com.google.common.collect.Lists;
 import org.apache.doris.qe.ConnectContext;
+import org.apache.doris.thrift.TColumnDict;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +43,13 @@ public interface IDictManager {
                                     "REG AIR", "AIR");
                                 Collections.sort(l);
                                 return l;
+                            }
+
+                            @Override
+                            public TColumnDict toThrift() {
+                                TColumnDict tColumnDict = new TColumnDict();
+                                tColumnDict.str_dict = getDict();
+                                return tColumnDict;
                             }
                         };
                     }
