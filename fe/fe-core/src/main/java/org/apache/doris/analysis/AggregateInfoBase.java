@@ -200,6 +200,11 @@ public abstract class AggregateInfoBase {
     public TupleDescriptor getIntermediateTupleDesc() { return intermediateTupleDesc_; }
     public TupleId getIntermediateTupleId() { return intermediateTupleDesc_.getId(); }
     public TupleId getOutputTupleId() { return outputTupleDesc_.getId(); }
+
+    public void setOutputTupleDesc_(TupleDescriptor outputTupleDesc_) {
+        this.outputTupleDesc_ = outputTupleDesc_;
+    }
+
     public boolean requiresIntermediateTuple() {
         Preconditions.checkNotNull(intermediateTupleDesc_);
         Preconditions.checkNotNull(outputTupleDesc_);

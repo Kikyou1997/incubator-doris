@@ -20,6 +20,7 @@
 
 package org.apache.doris.planner;
 
+import com.google.common.collect.Maps;
 import org.apache.doris.analysis.*;
 import org.apache.doris.catalog.Function;
 import org.apache.doris.catalog.Type;
@@ -28,6 +29,7 @@ import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.TreeNode;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.VectorizedUtil;
+import org.apache.doris.statistics.ColumnDict;
 import org.apache.doris.statistics.StatsDeriveResult;
 import org.apache.doris.thrift.TExplainLevel;
 import org.apache.doris.thrift.TFunctionBinaryType;
@@ -47,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -75,6 +78,8 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
 
     // ids materialized by the tree rooted at this node
     protected ArrayList<TupleId> tupleIds;
+
+    protected ArrayList<TupleId> originTupleIds;
 
     // ids of the TblRefs "materialized" by this node; identical with tupleIds_
     // if the tree rooted at this node only materializes BaseTblRefs;
@@ -131,7 +136,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
     protected NodeType nodeType = NodeType.DEFAULT;
     protected StatsDeriveResult statsDeriveResult;
 
-    protected Set<SlotRef> requireEncodeSlot = Sets.newHashSet();
+    protected Map<SlotRef, ColumnDict> requireEncodeSlotToDictColumn = Maps.newHashMap();
 
     protected PlanNode(PlanNodeId id, ArrayList<TupleId> tupleIds, String planNodeName) {
         this.id = id;
@@ -966,7 +971,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
     }
 
     public void filterDictSlot(DecodeContext context) {
-        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
+        Set<Integer> dictCodableSlot = context.getDictCodableSlot();
         Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
         // TODO: some predicate could also be optimized by global dict, we will support it in the future
         conjuncts.forEach(e -> {

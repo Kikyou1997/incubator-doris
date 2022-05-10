@@ -2189,20 +2189,20 @@ public class QueryPlanTest {
             "    \"replication_num\"=\"1\"\n" +
             ");");
         String sql = "SELECT v2 FROM d_t GROUP BY v2";
-        String plan = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql);
+        String plan = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql);
         Assert.assertTrue(plan.contains("Decode"));
 
         sql = "SELECT count(*) FROM d_t GROUP BY v2";
-        plan = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql);
+        plan = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql);
         Assert.assertTrue(plan.contains("Decode"));
 
         connectContext.getSessionVariable().setEnableProjection(true);
         String sql3 = "SELECT count(*) FROM d_t GROUP BY v2";
-        String plan3 = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql3);
+        String plan3 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql3);
         Assert.assertFalse(plan3.contains("Decode"));
 
         String sql4 = "SELECT k1 FROM d_t";
-        String plan4 = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql4);
+        String plan4 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql4);
         Assert.assertFalse(plan4.contains("Decode"));
 
         createTable("CREATE TABLE `lineitem` (\n" +
@@ -2226,7 +2226,7 @@ public class QueryPlanTest {
         // TODO: For test only, delete it later
         connectContext.getSessionVariable().setDictTest(true);
         String sql5 = "SELECT l_shipmode, COUNT(l_shipmode) FROM lineitem GROUP BY  l_shipmode";
-        String plan5 = UtFrameUtils.getSQLPlanOrErrorMsg(connectContext, sql5);
+        String plan5 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql5);
         Assert.assertTrue(plan5.contains("Decode"));
 
 

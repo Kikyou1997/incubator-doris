@@ -20,6 +20,7 @@
 
 package org.apache.doris.planner;
 
+import com.google.common.collect.Maps;
 import org.apache.doris.analysis.AggregateInfo;
 import org.apache.doris.analysis.Analyzer;
 import org.apache.doris.analysis.Expr;
@@ -28,13 +29,15 @@ import org.apache.doris.analysis.FunctionParams;
 import org.apache.doris.analysis.SlotDescriptor;
 import org.apache.doris.analysis.SlotId;
 import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleDescriptor;
 import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
-import org.apache.doris.common.Id;
+import org.apache.doris.catalog.Type;
 import org.apache.doris.common.NotImplementedException;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.VectorizedUtil;
+import org.apache.doris.statistics.ColumnDict;
 import org.apache.doris.thrift.TAggregationNode;
 import org.apache.doris.thrift.TExplainLevel;
 import org.apache.doris.thrift.TExpr;
@@ -52,6 +55,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -383,8 +387,44 @@ public class AggregationNode extends PlanNode {
 
     @Override
     public void updateSlots(DecodeContext context) {
-        for (SlotRef slotRef : requireEncodeSlot) {
+        for (SlotRef slotRef : requireEncodeSlotToDictColumn.keySet()) {
             context.updateSlotRefType(slotRef);
+        }
+        // tupleIds in this node will always be 1
+        TupleId tupleId = tupleIds.get(0);
+        TupleDescriptor tupleDesc = context.getTableDesc().getTupleDesc(tupleId);
+        Map<Integer, Integer> slotOffsetToDictId = Maps.newHashMap();
+        for (SlotDescriptor slotDesc :  tupleDesc.getSlots()) {
+            List<Expr> exprList = slotDesc.getSourceExprs();
+            for (Expr expr : exprList) {
+                if (expr instanceof SlotRef) {
+                    SlotRef slotRef = (SlotRef) expr;
+                    SlotDescriptor dictSlotDesc = context.getDictSlotDesc(slotRef.getSlotId().asInt());
+                    if (dictSlotDesc == null) {
+                        continue;
+                    }
+                    for (Map.Entry<SlotRef, ColumnDict> entry :
+                        requireEncodeSlotToDictColumn.entrySet()) {
+                        SlotId requiredEncodeSlotId = entry.getKey().getSlotId();
+                        if (requiredEncodeSlotId.equals(dictSlotDesc.getId())) {
+                            slotOffsetToDictId.put(slotDesc.getSlotOffset(), entry.getValue().getId());
+                        }
+                    }
+                }
+            }
+        }
+        TupleDescriptor newTupleDesc = context.generateTupleDesc(tupleId);
+        originTupleIds = tupleIds;
+        tupleIds = new ArrayList<>();
+        tupleIds.add(newTupleDesc.getId());
+        aggInfo.setOutputTupleDesc_(newTupleDesc);
+        List<SlotDescriptor> slotDescList = newTupleDesc.getSlots();
+        for (Map.Entry<Integer, Integer> entry: slotOffsetToDictId.entrySet()) {
+            SlotDescriptor slotDesc = slotDescList.get(entry.getKey());
+            slotDesc.setType(Type.INT);
+            int slotId = slotDesc.getId().asInt();
+            context.addSlotToDictSlot(slotId, entry.getValue());
+            context.getTableDesc().addSlotToDict(slotId, entry.getValue());
         }
     }
 
@@ -406,7 +446,6 @@ public class AggregationNode extends PlanNode {
     }
 
     private void findEncodeNeedSlot(List<Expr> funcParamExprList, DecodeContext context) {
-        Set<Integer> dictCodableSlot = context.getAllDictCodableSlot();
         for (Expr expr : funcParamExprList) {
             if (expr instanceof SlotRef) {
                 SlotRef slotRef = (SlotRef) expr;
@@ -416,10 +455,12 @@ public class AggregationNode extends PlanNode {
                     continue;
                 }
                 int slotId = slotRef.getSlotId().asInt();
-                if (!dictCodableSlot.contains(slotId)) {
+                context.getColumnDictBySlotId(slotId);
+                ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
+                if (columnDict == null) {
                     continue;
                 }
-                requireEncodeSlot.add(slotRef);
+                requireEncodeSlotToDictColumn.put(slotRef, columnDict);
                 context.addEncodeNeededSlot(slotId);
             }
         }
@@ -445,7 +486,10 @@ public class AggregationNode extends PlanNode {
                 .collect(Collectors.toList());
         } else {
             originSlotInOutput =
-                aggInfo.getOutputTupleDesc().getSlots()
+                decodeContext
+                    .getTableDesc()
+                    .getTupleDesc(originTupleIds.get(0))
+                    .getSlots()
                     .stream()
                     .map(SlotDescriptor::getSourceExprs)
                     .flatMap(Collection::stream)
@@ -457,7 +501,7 @@ public class AggregationNode extends PlanNode {
         if (originSlotInOutput.isEmpty()) {
             return;
         }
-        decodeContext.newDecodeNode(this, originSlotInOutput, tupleIds);
+        decodeContext.newDecodeNode(this, originSlotInOutput, originTupleIds);
     }
 
     @Override

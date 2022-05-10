@@ -39,23 +39,21 @@ import java.util.Set;
 
 public class DecodeContext {
 
-    private Map<Integer, ColumnDict> slotIdToColumnDict = new HashMap<>();
+    private final Map<Integer, ColumnDict> slotIdToColumnDict = new HashMap<>();
 
-    private Map<Integer, Integer> slotIdToDictSlotId = new HashMap<>();
+    private final Map<Integer, Integer> slotIdToDictSlotId = new HashMap<>();
 
-    private Map<Integer, Integer> tupleIdToNewTupleWithDictSlot = new HashMap<>();
-
-    private Set<Integer> encodeNeededSlotSet = new HashSet<>();
+    private final  Set<Integer> encodeNeededSlotSet = new HashSet<>();
 
     private boolean needEncode;
 
-    private Set<Integer> dictOptimizationDisabledSlot = new HashSet<>();
+    private final Set<Integer> dictOptimizationDisabledSlot = new HashSet<>();
 
-    private DescriptorTable tableDescriptor;
+    private final DescriptorTable tableDescriptor;
 
-    private PlannerContext ctx_;
+    private final PlannerContext ctx_;
 
-    private Map<PlanNode, DecodeNode> childToDecodeNode = new HashMap<>();
+    private final Map<PlanNode, DecodeNode> childToDecodeNode = new HashMap<>();
 
     public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor) {
         this.ctx_ = ctx_;
@@ -70,7 +68,11 @@ public class DecodeContext {
         return slotIdToColumnDict.keySet();
     }
 
-    public Set<Integer> getAllDictCodableSlot() {
+    public ColumnDict getColumnDictBySlotId(int slotId) {
+        return slotIdToColumnDict.get(slotId);
+    }
+
+    public Set<Integer> getDictCodableSlot() {
         return slotIdToColumnDict.keySet();
     }
 
@@ -93,7 +95,6 @@ public class DecodeContext {
         tupleDesc.setAliases(originTupleDesc.getAliases_(), originTupleDesc.hasExplicitAlias());
         tupleDesc.setCardinality(originTupleDesc.getCardinality());
         tupleDesc.setIsMaterialized(originTupleDesc.getIsMaterialized());
-        tupleIdToNewTupleWithDictSlot.put(src.asInt(), tupleDesc.getId().asInt());
         return tupleDesc;
     }
 
