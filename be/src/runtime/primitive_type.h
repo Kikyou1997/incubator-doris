@@ -31,7 +31,6 @@
 #include "vec/columns/column_decimal.h"
 #include "vec/columns/column_string.h"
 #include "vec/columns/columns_number.h"
-#include "vec/columns/column_dict_encoded_string.h"
 #include "vec/common/string_ref.h"
 #include "vec/core/types.h"
 #include "vec/runtime/vdatetime_value.h"
@@ -66,11 +65,7 @@ enum PrimitiveType {
     TYPE_TIME,           /* 21 */
     TYPE_OBJECT,         /* 22 */
     TYPE_STRING,         /* 23 */
-    TYPE_QUANTILE_STATE, /* 24 */
-
-    TYPE_DICT_UINT8,  /* 25 */
-    TYPE_DICT_UINT16, /* 26 */
-    TYPE_DICT_UINT32  /* 27 */
+    TYPE_QUANTILE_STATE  /* 24 */
 };
 
 inline PrimitiveType convert_type_to_primitive(FunctionContext::Type type) {
@@ -140,9 +135,6 @@ inline bool is_enumeration_type(PrimitiveType type) {
     case TYPE_BIGINT:
     case TYPE_LARGEINT:
     case TYPE_DATE:
-    case TYPE_DICT_UINT8:
-    case TYPE_DICT_UINT16:
-    case TYPE_DICT_UINT32:
         return true;
 
     case INVALID_TYPE:
@@ -180,16 +172,13 @@ inline int get_byte_size(PrimitiveType type) {
     case TYPE_NULL:
     case TYPE_BOOLEAN:
     case TYPE_TINYINT:
-    case TYPE_DICT_UINT8:
         return 1;
 
     case TYPE_SMALLINT:
-    case TYPE_DICT_UINT16:
         return 2;
 
     case TYPE_INT:
     case TYPE_FLOAT:
-    case TYPE_DICT_UINT32:
         return 4;
 
     case TYPE_BIGINT:
@@ -224,16 +213,13 @@ inline int get_real_byte_size(PrimitiveType type) {
     case TYPE_NULL:
     case TYPE_BOOLEAN:
     case TYPE_TINYINT:
-    case TYPE_DICT_UINT8:
         return 1;
 
     case TYPE_SMALLINT:
-    case TYPE_DICT_UINT16:
         return 2;
 
     case TYPE_INT:
     case TYPE_FLOAT:
-    case TYPE_DICT_UINT32:
         return 4;
 
     case TYPE_BIGINT:
@@ -372,22 +358,6 @@ template <>
 struct PrimitiveTypeTraits<TYPE_STRING> {
     using CppType = StringValue;
     using ColumnType = vectorized::ColumnString;
-};
-
-template <>
-struct PrimitiveTypeTraits<TYPE_DICT_UINT8> {
-    using CppType = uint8_t;
-    using ColumnType = vectorized::ColumnDictEncodedStringUInt8;
-};
-template <>
-struct PrimitiveTypeTraits<TYPE_DICT_UINT16> {
-    using CppType = uint16_t;
-    using ColumnType = vectorized::ColumnDictEncodedStringUInt16;
-};
-template <>
-struct PrimitiveTypeTraits<TYPE_DICT_UINT32> {
-    using CppType = uint32_t;
-    using ColumnType = vectorized::ColumnDictEncodedStringUInt32;
 };
 
 // only for adapt get_predicate_column_ptr

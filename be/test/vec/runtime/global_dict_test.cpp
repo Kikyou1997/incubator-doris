@@ -55,8 +55,8 @@ TEST(GlobalDictTest, EncodeAndDecode) {
     column->insert_data("a", 1);
     col_type_and_name.column = column->assume_mutable();
     EXPECT_FALSE(dict->encode(col_type_and_name));
-    uint8_t val = (uint8_t)dict_values.size();
-    encoded_column->assume_mutable()->insert_data((const char*)&val, sizeof(uint8_t));
+    uint32_t val = (uint32_t)dict_values.size();
+    encoded_column->assume_mutable()->insert_data((const char*)&val, sizeof(uint32_t));
     col_type_and_name.column = encoded_column;
     col_type_and_name.type = encoded_type;
     EXPECT_FALSE(dict->decode(col_type_and_name));

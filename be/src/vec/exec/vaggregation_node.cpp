@@ -30,7 +30,6 @@
 #include "vec/exprs/vslot_ref.h"
 #include "vec/functions/simple_function_factory.h"
 #include "vec/utils/util.hpp"
-#include "vec/data_types/data_type_dict_encoded_string.h"
 
 namespace doris::vectorized {
 
@@ -130,16 +129,13 @@ void AggregationNode::_init_hash_method(std::vector<VExprContext*>& probe_exprs)
         switch (probe_exprs[0]->root()->result_type()) {
         case TYPE_TINYINT:
         case TYPE_BOOLEAN:
-        case TYPE_DICT_UINT8:
             _agg_data.init(AggregatedDataVariants::Type::int8_key, is_nullable);
             return;
         case TYPE_SMALLINT:
-        case TYPE_DICT_UINT16:
             _agg_data.init(AggregatedDataVariants::Type::int16_key, is_nullable);
             return;
         case TYPE_INT:
         case TYPE_FLOAT:
-        case TYPE_DICT_UINT32:
             _agg_data.init(AggregatedDataVariants::Type::int32_key, is_nullable);
             return;
         case TYPE_BIGINT:
