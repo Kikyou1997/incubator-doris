@@ -54,8 +54,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -429,7 +431,14 @@ public class AggregationNode extends PlanNode {
     }
 
     private void findEncodeNeedSlot(DecodeContext context) {
+        findEncodeNeedSlot(context, aggInfo);
+        AggregateInfo mergeAggInfo = aggInfo.getMergeAggInfo();
+        if (mergeAggInfo != null) {
+            findEncodeNeedSlot(context, mergeAggInfo);
+        }
+    }
 
+    private void findEncodeNeedSlot(DecodeContext context, AggregateInfo aggInfo) {
         findEncodeNeedSlot(aggInfo.getGroupingExprs(), context);
         for (FunctionCallExpr func : aggInfo.getAggregateExprs()) {
             String funcName = func.getFnName().getFunction();
@@ -445,23 +454,31 @@ public class AggregationNode extends PlanNode {
         }
     }
 
-    private void findEncodeNeedSlot(List<Expr> funcParamExprList, DecodeContext context) {
-        for (Expr expr : funcParamExprList) {
+    private void findEncodeNeedSlot(List<Expr> exprList, DecodeContext context) {
+        for (Expr expr : exprList) {
             if (expr instanceof SlotRef) {
-                SlotRef slotRef = (SlotRef) expr;
-                Column column = slotRef.getColumn();
-                // means it's not a colRef
-                if (column == null) {
-                    continue;
+                List<SlotRef> linkedSlotRef = new ArrayList<>();
+                Queue<SlotRef> slotRefQueue = new LinkedList<>();
+                slotRefQueue.add((SlotRef) expr);
+                while (!slotRefQueue.isEmpty()) {
+                    SlotRef slotRef = slotRefQueue.poll();
+                    Column column = slotRef.getColumn();
+                    // means it's a colRef
+                    if (column != null) {
+                        int slotId = slotRef.getSlotId().asInt();
+                        ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
+                        if (columnDict != null) {
+                            requireEncodeSlotToDictColumn.put(slotRef, columnDict);
+                            context.addEncodeNeededSlot(slotId);
+                        }
+                        continue;
+                    }
+                    SlotDescriptor slotDesc = slotRef.getDesc();
+                    slotDesc.getSourceExprs()
+                        .stream()
+                        .filter(e -> e instanceof SlotRef
+                        ).forEach(e -> slotRefQueue.add((SlotRef) e));
                 }
-                int slotId = slotRef.getSlotId().asInt();
-                context.getColumnDictBySlotId(slotId);
-                ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
-                if (columnDict == null) {
-                    continue;
-                }
-                requireEncodeSlotToDictColumn.put(slotRef, columnDict);
-                context.addEncodeNeededSlot(slotId);
             }
         }
     }
