@@ -47,6 +47,11 @@ Status VOlapScanNode::prepare(RuntimeState* state){
         for (const auto& item : _olap_scan_node.slot_to_dict) {
             _dicts.emplace(item.first, state->get_global_dict(item.first));
         }
+        for( auto slot: _tuple_desc->slots()){
+            if (_dicts.find(slot->id()) != _dicts.end()){
+                slot->set_global_dict(_dicts[slot->id()]);
+            }
+        }
     }
     return Status::OK();
 }

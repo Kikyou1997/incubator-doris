@@ -90,8 +90,13 @@ void SlotDescriptor::to_protobuf(PSlotDescriptor* pslot) const {
 vectorized::MutableColumnPtr SlotDescriptor::get_empty_mutable_column() const {
     auto data_type = get_data_type_ptr();
     if (data_type) {
-        return data_type->create_column();
-    }
+        auto column_ptr = data_type->create_column();
+        if (is_global_dict_column())
+        {
+            column_ptr->set_global_dict(get_global_dict());
+        }
+        return column_ptr;
+    } 
     return nullptr;
 }
 

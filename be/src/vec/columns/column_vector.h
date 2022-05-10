@@ -31,7 +31,7 @@
 #include "vec/core/field.h"
 
 namespace doris::vectorized {
-
+class GlobalDict;
 /** Stuff for comparing numbers.
   * Integer values are compared as usual.
   * Floating-point numbers are compared this way that NaNs always end up at the end
@@ -354,8 +354,14 @@ public:
         data[self_row] = T();
     }
 
+    std::shared_ptr<GlobalDict> get_global_dict() const override { return _dict; }
+    void set_global_dict(std::shared_ptr<GlobalDict> dict) override { _dict = dict; }
+    bool has_global_dict() const override { return nullptr != _dict.get(); }
+
 protected:
     Container data;
+private:
+    std::shared_ptr<GlobalDict> _dict;
 };
 
 template <typename T>

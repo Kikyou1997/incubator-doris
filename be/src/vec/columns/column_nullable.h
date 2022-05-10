@@ -276,6 +276,11 @@ public:
         get_nested_column().convert_dict_codes_if_necessary();
     }
 
+    //global dict
+    std::shared_ptr<GlobalDict> get_global_dict() const override { return get_nested_column().get_global_dict(); }
+    void set_global_dict(std::shared_ptr<GlobalDict> dict) override { get_nested_column().set_global_dict(dict); }
+    bool has_global_dict() const override { return get_nested_column().has_global_dict(); }
+
 private:
     WrappedPtr nested_column;
     WrappedPtr null_map;
