@@ -74,6 +74,7 @@ public class DecodeNode extends PlanNode {
     protected void toThrift(TPlanNode msg) {
         msg.node_type = TPlanNodeType.DECODE_NODE;
         msg.decode_node = new TDecodeNode(tupleIds.get(0).asInt(), this.slotIdToDictId);
+        msg.decode_node.input_tuple_id = children.get(0).tupleIds.get(0).asInt();
     }
 
     public String getNodeExplainString(String prefix, TExplainLevel detailLevel) {
