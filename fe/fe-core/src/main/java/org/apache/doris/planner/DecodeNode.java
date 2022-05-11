@@ -21,7 +21,6 @@
 package org.apache.doris.planner;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -74,7 +73,7 @@ public class DecodeNode extends PlanNode {
 
     protected void toThrift(TPlanNode msg) {
         msg.node_type = TPlanNodeType.DECODE_NODE;
-        msg.decode_node = new TDecodeNode(this.slotIdToDictId);
+        msg.decode_node = new TDecodeNode(tupleIds.get(0).asInt(), this.slotIdToDictId);
     }
 
     public String getNodeExplainString(String prefix, TExplainLevel detailLevel) {
