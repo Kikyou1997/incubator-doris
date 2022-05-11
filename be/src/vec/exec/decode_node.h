@@ -29,6 +29,7 @@ class DecodeNode : public doris::ExecNode {
 public:
     DecodeNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs);
     Status init(const TPlanNode& tnode, RuntimeState* state = nullptr) override;
+    Status prepare(RuntimeState* state) override;
     Status get_next(RuntimeState* state, RowBatch* row_batch, bool* eos) override {
         return Status::NotSupported("Not Implemented VOlapScanNode Node::get_next scalar");
     }
@@ -36,6 +37,8 @@ public:
 
 private:
     TDecodeNode _decode_node;
+    // Tuple id resolved in prepare() to set _tuple_desc;
+    TupleId _tuple_id;
     const TupleDescriptor* _tuple_desc;
     std::map<int, int> _slot_to_dict;
     std::map<int, int> _slot_to_pos;
