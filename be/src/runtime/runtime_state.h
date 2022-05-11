@@ -364,11 +364,13 @@ public:
 
     QueryFragmentsCtx* get_query_fragments_ctx() { return _query_ctx; }
 
-    void set_global_dicts(TGlobalDict tglobal_dict);
+    void set_global_dicts(const std::shared_ptr<TGlobalDict>& tglobal_dict);
 
     vectorized::GlobalDictSPtr get_global_dict(int slot_id);
 
     vectorized::GlobalDictSPtr find_global_dict(int slot_id);
+
+    vectorized::GlobalDictSPtr get_global_dict_by_dict_id(int dict_id);
 private:
     // Use a custom block manager for the query for testing purposes.
     void set_block_mgr2(const std::shared_ptr<BufferedBlockMgr2>& block_mgr) {
@@ -521,7 +523,9 @@ private:
     RuntimeState(const RuntimeState&);
 
     //global dict
-    std::map<int, vectorized::GlobalDictSPtr> _global_dict_map; 
+    std::map<int, vectorized::GlobalDictSPtr> _slot_id_to_global_dict_map; 
+
+    std::map<int, vectorized::GlobalDictSPtr> _dict_id_to_global_dict_map; 
 
 };
 

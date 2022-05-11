@@ -245,7 +245,7 @@ void BinaryDictPageDecoder::set_dict_decoder(PageDecoder* dict_decoder, StringRe
 void BinaryDictPageDecoder::map_local_code_to_global_code(std::shared_ptr<vectorized::GlobalDict> global_dict){
     _local_code_to_global_code.resize(_dict_decoder->count());
     for(int i=0; i<_dict_decoder->count(); i++){
-        const StringValue str(_dict_word_info[i].data, _dict_word_info[i].size);
+        const StringValue str(_dict_word_info[i].data, strnlen( _dict_word_info[i].data, _dict_word_info[i].size ));
         _local_code_to_global_code[i] = global_dict->find_code( str );
     }
 }

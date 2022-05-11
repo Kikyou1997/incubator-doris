@@ -25,7 +25,8 @@
 namespace doris::vectorized {
 
 GlobalDict::GlobalDict(const std::vector<std::string>& data) : Dict(data) {
-    for (const auto& val : data) {
+    _dict_data = data;
+    for (const auto& val : _dict_data) {
         StringValue v {val.data(), (int)val.size()};
         insert_value(v);
     }

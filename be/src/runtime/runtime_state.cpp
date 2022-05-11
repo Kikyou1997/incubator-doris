@@ -466,28 +466,36 @@ int64_t RuntimeState::get_load_mem_limit() {
     }
 }
 
-void RuntimeState::set_global_dicts(TGlobalDict tglobal_dict){
-    std::map<int, vectorized::GlobalDictSPtr> dictmap;
-    for(auto it = tglobal_dict.dicts.begin(); it != tglobal_dict.dicts.end(); it++){
-        dictmap[it->first] = std::make_shared<vectorized::GlobalDict>(it->second.str_dict);
-    }
-    for (auto it = tglobal_dict.slot_dicts.begin(); it != tglobal_dict.slot_dicts.end(); it++){
-        _global_dict_map[it->first] = dictmap[it->second];
+void RuntimeState::set_global_dicts(const std::shared_ptr<TGlobalDict>& tglobal_dict) {
+    if (tglobal_dict) {
+        for (auto it = tglobal_dict->dicts.begin(); it != tglobal_dict->dicts.end(); it++) {
+            _dict_id_to_global_dict_map[it->first] = std::make_shared<vectorized::GlobalDict>(it->second.str_dict);
+        }
+        for (auto it = tglobal_dict->slot_dicts.begin(); it != tglobal_dict->slot_dicts.end();
+             it++) {
+            assert(_dict_id_to_global_dict_map.find(it->second) != _dict_id_to_global_dict_map.end());
+            _slot_id_to_global_dict_map[it->first] = _dict_id_to_global_dict_map[it->second];
+        }
     }
 }
 
-vectorized::GlobalDictSPtr RuntimeState::get_global_dict(int slot_id){
-    assert(_global_dict_map.find(slot_id) != _global_dict_map.end());
-    return _global_dict_map[slot_id];
+vectorized::GlobalDictSPtr RuntimeState::get_global_dict(int slot_id) {
+    assert(_slot_id_to_global_dict_map.find(slot_id) != _slot_id_to_global_dict_map.end());
+    return _slot_id_to_global_dict_map[slot_id];
 }
 
 vectorized::GlobalDictSPtr RuntimeState::find_global_dict(int slot_id) {
-    auto it = _global_dict_map.find(slot_id);
-    if (it != _global_dict_map.end()) {
+    auto it = _slot_id_to_global_dict_map.find(slot_id);
+    if (it != _slot_id_to_global_dict_map.end()) {
         assert(it->second);
         return it->second;
     }
     return nullptr;
+}
+
+vectorized::GlobalDictSPtr RuntimeState::get_global_dict_by_dict_id(int dict_id) {
+    assert(_dict_id_to_global_dict_map.find(dict_id) != _dict_id_to_global_dict_map.end());
+    return _dict_id_to_global_dict_map[dict_id];
 }
 
 } // end namespace doris

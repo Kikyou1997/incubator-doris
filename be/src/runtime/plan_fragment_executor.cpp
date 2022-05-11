@@ -123,6 +123,9 @@ Status PlanFragmentExecutor::prepare(const TExecPlanFragmentParams& request,
     }
     _runtime_state->set_desc_tbl(desc_tbl);
 
+    // set up global dict
+    _runtime_state->set_global_dicts(desc_tbl->get_global_dict());
+
     // set up plan
     DCHECK(request.__isset.fragment);
     RETURN_IF_ERROR(ExecNode::create_tree(_runtime_state.get(), obj_pool(), request.fragment.plan,
@@ -171,10 +174,6 @@ Status PlanFragmentExecutor::prepare(const TExecPlanFragmentParams& request,
     _runtime_state->set_per_fragment_instance_idx(params.sender_id);
     _runtime_state->set_num_per_fragment_instances(params.num_senders);
 
-    // set up global dict
-    if (request.__isset.desc_tbl && request.desc_tbl.__isset.globalDict) {
-        _runtime_state->set_global_dicts(request.desc_tbl.globalDict);
-    }
     // set up sink, if required
     if (request.fragment.__isset.output_sink) {
         RETURN_IF_ERROR(DataSink::create_data_sink(

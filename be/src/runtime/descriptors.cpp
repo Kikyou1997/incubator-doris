@@ -589,7 +589,9 @@ Status DescriptorTbl::create(ObjectPool* pool, const TDescriptorTable& thrift_tb
         }
         entry->second->add_slot(slot_d);
     }
-
+    if (thrift_tbl.__isset.globalDict) {
+        (*tbl)->_global_dict = std::make_shared<TGlobalDict>(thrift_tbl.globalDict);
+    }
     return Status::OK();
 }
 
@@ -624,6 +626,10 @@ SlotDescriptor* DescriptorTbl::get_slot_descriptor(SlotId id) const {
     } else {
         return i->second;
     }
+}
+
+std::shared_ptr<TGlobalDict> DescriptorTbl::get_global_dict() const {
+    return _global_dict;
 }
 
 // return all registered tuple descriptors

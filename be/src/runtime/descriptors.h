@@ -354,6 +354,7 @@ public:
     TableDescriptor* get_table_descriptor(TableId id) const;
     TupleDescriptor* get_tuple_descriptor(TupleId id) const;
     SlotDescriptor* get_slot_descriptor(SlotId id) const;
+    std::shared_ptr<TGlobalDict> get_global_dict() const;
 
     // return all registered tuple descriptors
     void get_tuple_descs(std::vector<TupleDescriptor*>* descs) const;
@@ -368,6 +369,7 @@ private:
     TableDescriptorMap _tbl_desc_map;
     TupleDescriptorMap _tuple_desc_map;
     SlotDescriptorMap _slot_desc_map;
+    std::shared_ptr<TGlobalDict> _global_dict;
 
     DescriptorTbl() : _tbl_desc_map(), _tuple_desc_map(), _slot_desc_map() {}
 };

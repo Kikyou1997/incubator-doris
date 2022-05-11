@@ -40,6 +40,7 @@ private:
     // dict version
     size_t _version = 0;
     int _id = -1;
+    std::vector<std::string> _dict_data;
 };
 
 using GlobalDictSPtr = std::shared_ptr<GlobalDict>;
