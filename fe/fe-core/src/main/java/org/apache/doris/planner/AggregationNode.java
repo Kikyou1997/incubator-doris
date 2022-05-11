@@ -21,16 +21,7 @@
 package org.apache.doris.planner;
 
 import com.google.common.collect.Maps;
-import org.apache.doris.analysis.AggregateInfo;
-import org.apache.doris.analysis.Analyzer;
-import org.apache.doris.analysis.Expr;
-import org.apache.doris.analysis.FunctionCallExpr;
-import org.apache.doris.analysis.FunctionParams;
-import org.apache.doris.analysis.SlotDescriptor;
-import org.apache.doris.analysis.SlotId;
-import org.apache.doris.analysis.SlotRef;
-import org.apache.doris.analysis.TupleDescriptor;
-import org.apache.doris.analysis.TupleId;
+import org.apache.doris.analysis.*;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.catalog.FunctionSet;
 import org.apache.doris.common.AnalysisException;
@@ -424,6 +415,7 @@ public class AggregationNode extends PlanNode {
                 context.getAnalyzer());
             tupleIds = aggInfo.getOutputTupleId().asList();
             TupleDescriptor newOutputTupleDesc = aggInfo.getOutputTupleDesc();
+            updateOutputSlots(newOutputTupleDesc, context);
             for (SlotDescriptor slotDescriptor : newOutputTupleDesc.getSlots()) {
                 slotDescriptor.setIsMaterialized(true);
                 for (Expr expr: slotDescriptor.getSourceExprs()) {
@@ -440,6 +432,21 @@ public class AggregationNode extends PlanNode {
         } catch (AnalysisException e) {
             throw new RuntimeException("Failed to create new AggInfo", e);
         }
+    }
+
+    private void updateOutputSlots(TupleDescriptor newTupleDesc, DecodeContext context) {
+        if (outputSlotIds == null) {
+            return;
+        }
+        DescriptorTable tableDesc = context.getTableDesc();
+        List<SlotId> newOutputSlotIds = new ArrayList<>();
+        List<SlotDescriptor> slotDescriptorList = newTupleDesc.getSlots();
+        for (SlotId slotId: outputSlotIds) {
+            SlotDescriptor slotDesc = tableDesc.getSlotDesc(slotId);
+            int slotDescOffset = slotDesc.getSlotOffset();
+            newOutputSlotIds.add(slotDescriptorList.get(slotDescOffset).getId());
+        }
+        outputSlotIds = newOutputSlotIds;
     }
 
     private void findEncodeNeedSlot(DecodeContext context) {
@@ -469,7 +476,6 @@ public class AggregationNode extends PlanNode {
     private void findEncodeNeedSlot(List<Expr> exprList, DecodeContext context) {
         for (Expr expr : exprList) {
             if (expr instanceof SlotRef) {
-                List<SlotRef> linkedSlotRef = new ArrayList<>();
                 Queue<SlotRef> slotRefQueue = new LinkedList<>();
                 slotRefQueue.add((SlotRef) expr);
                 while (!slotRefQueue.isEmpty()) {
@@ -502,15 +508,7 @@ public class AggregationNode extends PlanNode {
         if (outputSlotIds != null) {
             // TODO: should handle all the expr type instead of slotRef only
             originSlotInOutput = outputSlotIds
-                .stream()
-                .map(id -> decodeContext.getTableDesc().getSlotDescById(id).getSourceExprs())
-                .flatMap(Collection::stream)
-                .map(e -> {
-                    List<Integer> slotIdList = new ArrayList<>();
-                    decodeContext.getDecodeRequiredSlotIdOfExpr(e, slotIdList);
-                    return slotIdList;
-                })
-                .flatMap(Collection::stream)
+                .stream().map(SlotId::asInt)
                 .filter(originSlotIdSet::contains)
                 .collect(Collectors.toList());
         } else {

@@ -2202,32 +2202,32 @@ public class QueryPlanTest {
             ") DISTRIBUTED BY HASH(`l_orderkey`) BUCKETS 32 PROPERTIES (\"replication_num\" = \"1\");");
         // TODO: For test only, delete it later
         connectContext.getSessionVariable().setDictTest(true);
-//        createTable("CREATE TABLE d_t (k1 int, v1 varchar, v2 varchar)\n" +
-//            "DISTRIBUTED BY HASH(k1)\n" +
-//            "BUCKETS 3\n" +
-//            "PROPERTIES(\n" +
-//            "    \"replication_num\"=\"1\"\n" +
-//            ");");
-//        String sql = "SELECT v2 FROM d_t GROUP BY v2";
-//        String plan = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql);
-//        Assert.assertTrue(plan.contains("Decode"));
-//
-//        sql = "SELECT count(*) FROM d_t GROUP BY v2";
-//        plan = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql);
-//        Assert.assertTrue(plan.contains("Decode"));
-//
-//        connectContext.getSessionVariable().setEnableProjection(true);
-//        String sql3 = "SELECT count(*) FROM d_t GROUP BY v2";
-//        String plan3 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql3);
-//        Assert.assertFalse(plan3.contains("Decode"));
-//
-//        String sql4 = "SELECT k1 FROM d_t";
-//        String plan4 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql4);
-//        Assert.assertFalse(plan4.contains("Decode"));
-//
-//        String sql5 = "SELECT l_shipmode, COUNT(l_shipmode) FROM lineitem GROUP BY  l_shipmode";
-//        String plan5 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql5);
-//        Assert.assertTrue(plan5.contains("Decode"));
+        createTable("CREATE TABLE d_t (k1 int, v1 varchar, v2 varchar)\n" +
+            "DISTRIBUTED BY HASH(k1)\n" +
+            "BUCKETS 3\n" +
+            "PROPERTIES(\n" +
+            "    \"replication_num\"=\"1\"\n" +
+            ");");
+        String sql = "SELECT v2 FROM d_t GROUP BY v2";
+        String plan = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql);
+        Assert.assertTrue(plan.contains("Decode"));
+
+        sql = "SELECT count(*) FROM d_t GROUP BY v2";
+        plan = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql);
+        Assert.assertTrue(plan.contains("Decode"));
+
+        connectContext.getSessionVariable().setEnableProjection(true);
+        String sql3 = "SELECT count(*) FROM d_t GROUP BY v2";
+        String plan3 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql3);
+        Assert.assertFalse(plan3.contains("Decode"));
+
+        String sql4 = "SELECT k1 FROM d_t";
+        String plan4 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql4);
+        Assert.assertFalse(plan4.contains("Decode"));
+
+        String sql5 = "SELECT l_shipmode, COUNT(l_shipmode) FROM lineitem GROUP BY  l_shipmode";
+        String plan5 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql5);
+        Assert.assertTrue(plan5.contains("Decode"));
         String sql6 = "SELECT l_shipmode FROM lineitem GROUP BY  l_shipmode";
         String plan6 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql6);
         Assert.assertTrue(plan6.contains("Decode"));
