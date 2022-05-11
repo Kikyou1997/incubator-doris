@@ -21,9 +21,11 @@
 package org.apache.doris.planner;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import com.clearspring.analytics.util.Lists;
 import org.apache.doris.analysis.Analyzer;
@@ -74,7 +76,11 @@ public class DecodeNode extends PlanNode {
     protected void toThrift(TPlanNode msg) {
         msg.node_type = TPlanNodeType.DECODE_NODE;
         msg.decode_node = new TDecodeNode(tupleIds.get(0).asInt(), this.slotIdToDictId);
-        msg.decode_node.input_tuple_id = children.get(0).tupleIds.get(0).asInt();
+        msg.decode_node.input_tuple_ids = children.get(0)
+            .tupleIds
+            .stream()
+            .map(TupleId::asInt)
+            .collect(Collectors.toList());
     }
 
     public String getNodeExplainString(String prefix, TExplainLevel detailLevel) {

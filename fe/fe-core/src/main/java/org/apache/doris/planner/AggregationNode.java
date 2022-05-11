@@ -425,6 +425,7 @@ public class AggregationNode extends PlanNode {
             tupleIds = aggInfo.getOutputTupleId().asList();
             TupleDescriptor newOutputTupleDesc = aggInfo.getOutputTupleDesc();
             for (SlotDescriptor slotDescriptor : newOutputTupleDesc.getSlots()) {
+                slotDescriptor.setIsMaterialized(true);
                 for (Expr expr: slotDescriptor.getSourceExprs()) {
                     if (expr instanceof SlotRef) {
                         SlotRef slotRef = (SlotRef) expr;
