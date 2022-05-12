@@ -2202,6 +2202,7 @@ public class QueryPlanTest {
             ") DISTRIBUTED BY HASH(`l_orderkey`) BUCKETS 32 PROPERTIES (\"replication_num\" = \"1\");");
         // TODO: For test only, delete it later
         connectContext.getSessionVariable().setDictTest(true);
+        connectContext.getSessionVariable().setEnableVectorizedEngine(true);
 //        createTable("CREATE TABLE d_t (k1 int, v1 varchar, v2 varchar)\n" +
 //            "DISTRIBUTED BY HASH(k1)\n" +
 //            "BUCKETS 3\n" +

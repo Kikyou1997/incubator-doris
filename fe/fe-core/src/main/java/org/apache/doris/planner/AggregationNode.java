@@ -389,7 +389,7 @@ public class AggregationNode extends PlanNode {
 
     @Override
     public void updateSlots(DecodeContext context) {
-        for (SlotRef slotRef : requireEncodeSlotToDictColumn.keySet()) {
+        for (SlotRef slotRef : requireEncodeSlotRefList) {
             context.updateSlotRefType(slotRef);
         }
         // tupleIds in this node will always be 1
@@ -484,6 +484,7 @@ public class AggregationNode extends PlanNode {
                         ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
                         if (columnDict != null) {
                             requireEncodeSlotToDictColumn.put(slotRef, columnDict);
+                            requireEncodeSlotRefList.add(slotRef);
                             context.addEncodeNeededSlot(slotId);
                         }
                         continue;
