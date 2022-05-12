@@ -183,6 +183,8 @@ public class SessionVariable implements Serializable, Writable {
     // TODO: for test only, delete it later
     public static final String DICT_TEST = "dict_test";
 
+    public static final String ENABLE_LOW_CARDINALITY_OPT = "enable_low_cardinality_optimize";
+
     // session origin value
     public Map<Field, String> sessionOriginValue = new HashMap<Field, String>();
     // check stmt is or not [select /*+ SET_VAR(...)*/ ...]
@@ -447,6 +449,9 @@ public class SessionVariable implements Serializable, Writable {
   
     @VariableMgr.VarAttr(name = ENABLE_PROJECTION)
     private boolean enableProjection = false;
+
+    @VariableMgr.VarAttr(name = ENABLE_LOW_CARDINALITY_OPT)
+    private boolean enableLowCardinalityOpt = true;
 
     public String getBlockEncryptionMode() {
         return blockEncryptionMode;
@@ -914,6 +919,14 @@ public class SessionVariable implements Serializable, Writable {
 
     public void setEnableProjection(boolean enableProjection) {
         this.enableProjection = enableProjection;
+    }
+
+    public boolean isEnableLowCardinalityOpt() {
+        return enableLowCardinalityOpt;
+    }
+
+    public void setEnableLowCardinalityOpt(boolean enableLowCardinalityOpt) {
+        this.enableLowCardinalityOpt = enableLowCardinalityOpt;
     }
 
     // Serialize to thrift object
