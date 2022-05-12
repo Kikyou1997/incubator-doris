@@ -2225,15 +2225,17 @@ public class QueryPlanTest {
 //        String sql4 = "SELECT k1 FROM d_t";
 //        String plan4 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql4);
 //        Assert.assertFalse(plan4.contains("Decode"));
-//
-        String sql5 = "SELECT l_shipmode, COUNT(l_shipmode) FROM lineitem GROUP BY  l_shipmode";
-        String plan5 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql5);
-        Assert.assertTrue(plan5.contains("Decode"));
-        String sql6 = "SELECT l_shipmode FROM lineitem GROUP BY  l_shipmode";
-        String plan6 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql6);
-        Assert.assertTrue(plan6.contains("Decode"));
+////
+//        String sql5 = "SELECT l_shipmode, COUNT(l_shipmode) FROM lineitem GROUP BY  l_shipmode";
+//        String plan5 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql5);
+//        Assert.assertTrue(plan5.contains("Decode"));
+//        String sql6 = "SELECT l_shipmode FROM lineitem GROUP BY  l_shipmode";
+//        String plan6 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql6);
+//        Assert.assertTrue(plan6.contains("Decode"));
 
-
+        String sql7 = "SELECT count(distinct l_shipmode) FROM lineitem GROUP BY  l_shipmode";
+        String plan7 = UtFrameUtils.getVerboseSQLPlanOrErrorMsg(connectContext, sql7);
+        Assert.assertTrue(plan7.contains("Decode"));
 
     }
 }

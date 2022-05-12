@@ -104,6 +104,9 @@ public class DecodeContext {
     public void updateSlotRefType(SlotRef slotRef) {
         int slotId = slotRef.getSlotId().asInt();
         SlotDescriptor dictSlotDesc = this.getDictSlotDesc(slotId);
+        if (dictSlotDesc == null) {
+            return;
+        }
         slotRef.setDesc(dictSlotDesc);
         slotRef.setType(Type.INT);
     }

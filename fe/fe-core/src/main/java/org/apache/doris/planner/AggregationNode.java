@@ -75,8 +75,7 @@ public class AggregationNode extends PlanNode {
     // If true, use streaming preaggregation algorithm. Not valid if this is a merge agg.
     private boolean useStreamingPreagg;
 
-    private static Set<String> dictAggregationSupportedFunction = Sets.newHashSet(
-        FunctionSet.COUNT, FunctionSet.MAX, FunctionSet.MIN);
+    private static Set<String> dictAggregationSupportedFunction = Sets.newHashSet(FunctionSet.COUNT);
 
     /**
      * Create an agg node that is not an intermediate node.
@@ -376,11 +375,6 @@ public class AggregationNode extends PlanNode {
         groupingExpr.forEach(e -> {
             if (!(e instanceof SlotRef)) {
                 SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
-                return;
-            }
-            SlotRef slotRef = (SlotRef) e;
-            if (slotRef.getColumn() == null) {
-                SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
             }
         });
         findEncodeNeedSlot(context);
@@ -392,31 +386,8 @@ public class AggregationNode extends PlanNode {
         for (SlotRef slotRef : requireEncodeSlotRefList) {
             context.updateSlotRefType(slotRef);
         }
-        // tupleIds in this node will always be 1
-        TupleId tupleId = tupleIds.get(0);
-        TupleDescriptor tupleDesc = context.getTableDesc().getTupleDesc(tupleId);
-        Map<Integer, Integer> slotOffsetToDictId = Maps.newHashMap();
-        for (SlotDescriptor slotDesc :  tupleDesc.getSlots()) {
-            List<Expr> exprList = slotDesc.getSourceExprs();
-            for (Expr expr : exprList) {
-                if (expr instanceof SlotRef) {
-                    SlotRef slotRef = (SlotRef) expr;
-                    SlotDescriptor dictSlotDesc = context.getDictSlotDesc(slotRef.getSlotId().asInt());
-                    if (dictSlotDesc == null) {
-                        continue;
-                    }
-                    for (Map.Entry<SlotRef, ColumnDict> entry :
-                        requireEncodeSlotToDictColumn.entrySet()) {
-                        SlotId requiredEncodeSlotId = entry.getKey().getSlotId();
-                        if (requiredEncodeSlotId.equals(dictSlotDesc.getId())) {
-                            slotOffsetToDictId.put(slotDesc.getSlotOffset(), entry.getValue().getId());
-                        }
-                    }
-                }
-            }
-        }
         try {
-            ArrayList<Integer> materialziedSlots = aggInfo.getMaterializedSlots_();
+            ArrayList<Integer> materializedSlots = aggInfo.getMaterializedSlots_();
             originTupleIds = tupleIds;
             aggInfo = AggregateInfo.create(
                 aggInfo.getGroupingExprs(),
@@ -424,8 +395,8 @@ public class AggregationNode extends PlanNode {
                 null,
                 context.getAnalyzer());
             tupleIds = aggInfo.getOutputTupleId().asList();
-            aggInfo.setMaterializedSlots_(materialziedSlots);
-            aggInfo.getMergeAggInfo().setMaterializedSlots_(materialziedSlots);
+            aggInfo.setMaterializedSlots_(materializedSlots);
+            aggInfo.getMergeAggInfo().setMaterializedSlots_(materializedSlots);
             TupleDescriptor newOutputTupleDesc = aggInfo.getOutputTupleDesc();
             for (SlotDescriptor slotDescriptor : newOutputTupleDesc.getSlots()) {
                 slotDescriptor.setIsMaterialized(true);
@@ -457,7 +428,7 @@ public class AggregationNode extends PlanNode {
         findEncodeNeedSlot(aggInfo.getGroupingExprs(), context);
         for (FunctionCallExpr func : aggInfo.getAggregateExprs()) {
             String funcName = func.getFnName().getFunction();
-            if (!dictAggregationSupportedFunction.contains(funcName)) {
+            if (dictAggregationSupportedFunction.contains(funcName)) {
                 continue;
             }
             FunctionParams functionParams = func.getParams();
@@ -472,7 +443,6 @@ public class AggregationNode extends PlanNode {
     private void findEncodeNeedSlot(List<Expr> exprList, DecodeContext context) {
         for (Expr expr : exprList) {
             if (expr instanceof SlotRef) {
-                List<SlotRef> linkedSlotRef = new ArrayList<>();
                 Queue<SlotRef> slotRefQueue = new LinkedList<>();
                 slotRefQueue.add((SlotRef) expr);
                 while (!slotRefQueue.isEmpty()) {
