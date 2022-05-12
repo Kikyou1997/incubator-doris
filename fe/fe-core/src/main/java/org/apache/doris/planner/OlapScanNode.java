@@ -54,6 +54,7 @@ import org.apache.doris.common.util.Util;
 import org.apache.doris.qe.ConnectContext;
 import org.apache.doris.qe.SessionVariable;
 import org.apache.doris.resource.Tag;
+import org.apache.doris.statistics.ColumnDict;
 import org.apache.doris.statistics.StatsRecursiveDerive;
 import org.apache.doris.system.Backend;
 import org.apache.doris.thrift.TExplainLevel;
@@ -968,12 +969,14 @@ public class OlapScanNode extends ScanNode {
             SlotDescriptor newSlotDesc =  newSlotDescList.get(slotDesc.getSlotOffset());
             int slotId = slotDesc.getId().asInt();
             newSlotDesc.setType(Type.INT);
-            int dictId = context.getDictId(slotId);
+            ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
+            int dictId = columnDict.getId();
             int newSlotId = newSlotDesc.getId().asInt();
             slotIdToDictId.put(newSlotId ,dictId);
             context.getTableDesc().addSlotToDict(newSlotId, dictId);
             context.addSlotToDictSlot(slotId, newSlotId);
             context.mapDictSlotToDict(newSlotId, slotId);
+            context.getTableDesc().putDict(dictId, columnDict);
         }
     }
 

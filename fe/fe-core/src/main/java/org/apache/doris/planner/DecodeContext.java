@@ -116,7 +116,6 @@ public class DecodeContext {
         for (Integer slotId : originSlotIdSet) {
             ColumnDict columnDict = slotIdToColumnDict.get(slotId);
             slotIdToDictId.put(slotId, columnDict.getId());
-            tableDescriptor.putDict(columnDict.getId(), columnDict);
         }
         DecodeNode decodeNode =  new DecodeNode(ctx_.getNextNodeId(), child, slotIdToDictId, output);
         childToDecodeNode.put(child, decodeNode);
@@ -125,11 +124,6 @@ public class DecodeContext {
 
     public Map<PlanNode, DecodeNode> getChildToDecodeNode() {
         return childToDecodeNode;
-    }
-
-    public int getDictId(int slotId) {
-        ColumnDict columnDict = slotIdToColumnDict.get(slotId);
-        return columnDict.getId();
     }
 
     public void addEncodeNeededSlot(int slotId) {
