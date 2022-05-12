@@ -124,7 +124,7 @@ public:
 
     //set _local_code_to_global_code
     //must called after set_dict_decoder()
-    void map_local_code_to_global_code(std::shared_ptr<vectorized::GlobalDict> global_dict);
+    bool map_local_code_to_global_code(std::shared_ptr<vectorized::GlobalDict> global_dict);
 
     ~BinaryDictPageDecoder();
 
