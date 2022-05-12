@@ -428,7 +428,7 @@ public class AggregationNode extends PlanNode {
         findEncodeNeedSlot(aggInfo.getGroupingExprs(), context);
         for (FunctionCallExpr func : aggInfo.getAggregateExprs()) {
             String funcName = func.getFnName().getFunction();
-            if (dictAggregationSupportedFunction.contains(funcName)) {
+            if (!dictAggregationSupportedFunction.contains(funcName)) {
                 continue;
             }
             FunctionParams functionParams = func.getParams();
