@@ -224,6 +224,14 @@ public abstract class AggregateInfoBase {
         return false;
     }
 
+    public ArrayList<Integer> getMaterializedSlots_() {
+        return materializedSlots_;
+    }
+
+    public void setMaterializedSlots_(ArrayList<Integer> materializedSlots_) {
+        this.materializedSlots_ = materializedSlots_;
+    }
+
     /**
      * output tuple maybe different from intermediate when noGrouping and fn null mode
      * is depend on argument

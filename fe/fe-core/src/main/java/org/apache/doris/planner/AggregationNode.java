@@ -416,6 +416,7 @@ public class AggregationNode extends PlanNode {
             }
         }
         try {
+            ArrayList<Integer> materialziedSlots = aggInfo.getMaterializedSlots_();
             originTupleIds = tupleIds;
             aggInfo = AggregateInfo.create(
                 aggInfo.getGroupingExprs(),
@@ -423,6 +424,8 @@ public class AggregationNode extends PlanNode {
                 null,
                 context.getAnalyzer());
             tupleIds = aggInfo.getOutputTupleId().asList();
+            aggInfo.setMaterializedSlots_(materialziedSlots);
+            aggInfo.getMergeAggInfo().setMaterializedSlots_(materialziedSlots);
             TupleDescriptor newOutputTupleDesc = aggInfo.getOutputTupleDesc();
             for (SlotDescriptor slotDescriptor : newOutputTupleDesc.getSlots()) {
                 slotDescriptor.setIsMaterialized(true);
