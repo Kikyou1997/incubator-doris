@@ -40,8 +40,6 @@ public class DecodeContext {
 
     private final  Set<Integer> encodeNeededSlotSet = new HashSet<>();
 
-    private boolean needEncode;
-
     private final Set<Integer> dictOptimizationDisabledSlot = new HashSet<>();
 
     private final DescriptorTable tableDescriptor;
@@ -106,6 +104,9 @@ public class DecodeContext {
     public void updateSlotRefType(SlotRef slotRef) {
         int slotId = slotRef.getSlotId().asInt();
         SlotDescriptor dictSlotDesc = this.getDictSlotDesc(slotId);
+        if (dictSlotDesc == null) {
+            return;
+        }
         slotRef.setDesc(dictSlotDesc);
         slotRef.setType(Type.INT);
     }
@@ -129,14 +130,6 @@ public class DecodeContext {
     public int getDictId(int slotId) {
         ColumnDict columnDict = slotIdToColumnDict.get(slotId);
         return columnDict.getId();
-    }
-
-    public boolean isNeedEncode() {
-        return needEncode;
-    }
-
-    public void setNeedEncode(boolean needEncode) {
-        this.needEncode = needEncode;
     }
 
     public void addEncodeNeededSlot(int slotId) {

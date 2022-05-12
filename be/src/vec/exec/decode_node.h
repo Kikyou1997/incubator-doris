@@ -29,6 +29,7 @@ class DecodeNode : public doris::ExecNode {
 public:
     DecodeNode(ObjectPool* pool, const TPlanNode& tnode, const DescriptorTbl& descs);
     Status init(const TPlanNode& tnode, RuntimeState* state = nullptr) override;
+    Status open(RuntimeState* state) override;
     Status get_next(RuntimeState* state, RowBatch* row_batch, bool* eos) override {
         return Status::NotSupported("Not Implemented VOlapScanNode Node::get_next scalar");
     }

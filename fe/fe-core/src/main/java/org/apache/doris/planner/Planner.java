@@ -181,8 +181,10 @@ public class Planner {
             projectPlanner.projectSingleNodePlan(queryStmt.getResultExprs(), singleNodePlan);
         }
 
-        DictPlanner dictPlanner = new DictPlanner(plannerContext, analyzer.getDescTbl(), analyzer);
-        singleNodePlan = dictPlanner.plan(singleNodePlan);
+        if (VectorizedUtil.isVectorized() && ConnectContext.get().getSessionVariable().isEnableLowCardinalityOpt()) {
+            DictPlanner dictPlanner = new DictPlanner(plannerContext, analyzer.getDescTbl(), analyzer);
+            singleNodePlan = dictPlanner.plan(singleNodePlan);
+        }
 
         if (statement instanceof InsertStmt) {
             InsertStmt insertStmt = (InsertStmt) statement;

@@ -371,7 +371,7 @@ Status AggregationNode::get_next(RuntimeState* state, RowBatch* row_batch, bool*
 
 Status AggregationNode::get_next(RuntimeState* state, Block* block, bool* eos) {
     SCOPED_TIMER(_runtime_profile->total_time_counter());
-    //SCOPED_SWITCH_TASK_THREAD_LOCAL_EXISTED_MEM_TRACKER(mem_tracker());
+    SCOPED_SWITCH_TASK_THREAD_LOCAL_EXISTED_MEM_TRACKER(mem_tracker());
     SCOPED_SWITCH_THREAD_LOCAL_MEM_TRACKER_ERR_CB("aggregator, while execute get_next.");
     
     if (_is_streaming_preagg) {
@@ -847,8 +847,6 @@ Status AggregationNode::_get_with_serialized_key_result(RuntimeState* state, Blo
     for (int i = 0; i < key_size; ++i) {
         if (!mem_reuse) {
             key_columns.emplace_back(column_withschema[i].type->create_column());
-            // DataTypeUInt32 a;
-            // key_columns.emplace_back(a.create_column());
         } else {
             key_columns.emplace_back(std::move(*block->get_by_position(i).column).mutate());
         }
@@ -931,8 +929,6 @@ Status AggregationNode::_serialize_with_serialized_key_result(RuntimeState* stat
             key_columns.emplace_back(std::move(*block->get_by_position(i).column).mutate());
         } else {
             key_columns.emplace_back(_probe_expr_ctxs[i]->root()->data_type()->create_column());
-            // DataTypeUInt32 a;
-            // key_columns.emplace_back(a.create_column());
         }
     }
 
@@ -997,7 +993,6 @@ Status AggregationNode::_serialize_with_serialized_key_result(RuntimeState* stat
             columns_with_schema.emplace_back(std::move(key_columns[i]),
                                              _probe_expr_ctxs[i]->root()->data_type(),
                                              _probe_expr_ctxs[i]->root()->expr_name());
-            //columns_with_schema.back().type = std::make_shared<DataTypeUInt32>();
         }
         for (int i = 0; i < agg_size; ++i) {
             columns_with_schema.emplace_back(std::move(value_columns[i]), value_data_types[i], "");

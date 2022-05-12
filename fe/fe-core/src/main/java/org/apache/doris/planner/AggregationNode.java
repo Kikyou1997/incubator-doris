@@ -66,8 +66,7 @@ public class AggregationNode extends PlanNode {
     // If true, use streaming preaggregation algorithm. Not valid if this is a merge agg.
     private boolean useStreamingPreagg;
 
-    private static Set<String> dictAggregationSupportedFunction = Sets.newHashSet(
-        FunctionSet.COUNT, FunctionSet.MAX, FunctionSet.MIN);
+    private static Set<String> dictAggregationSupportedFunction = Sets.newHashSet(FunctionSet.COUNT);
 
     /**
      * Create an agg node that is not an intermediate node.
@@ -367,11 +366,6 @@ public class AggregationNode extends PlanNode {
         groupingExpr.forEach(e -> {
             if (!(e instanceof SlotRef)) {
                 SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
-                return;
-            }
-            SlotRef slotRef = (SlotRef) e;
-            if (slotRef.getColumn() == null) {
-                SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
             }
         });
         findEncodeNeedSlot(context);
@@ -380,33 +374,11 @@ public class AggregationNode extends PlanNode {
 
     @Override
     public void updateSlots(DecodeContext context) {
-        for (SlotRef slotRef : requireEncodeSlotToDictColumn.keySet()) {
+        for (SlotRef slotRef : requireEncodeSlotRefList) {
             context.updateSlotRefType(slotRef);
         }
-        // tupleIds in this node will always be 1
-        TupleId tupleId = tupleIds.get(0);
-        TupleDescriptor tupleDesc = context.getTableDesc().getTupleDesc(tupleId);
-        Map<Integer, Integer> slotOffsetToDictId = Maps.newHashMap();
-        for (SlotDescriptor slotDesc :  tupleDesc.getSlots()) {
-            List<Expr> exprList = slotDesc.getSourceExprs();
-            for (Expr expr : exprList) {
-                if (expr instanceof SlotRef) {
-                    SlotRef slotRef = (SlotRef) expr;
-                    SlotDescriptor dictSlotDesc = context.getDictSlotDesc(slotRef.getSlotId().asInt());
-                    if (dictSlotDesc == null) {
-                        continue;
-                    }
-                    for (Map.Entry<SlotRef, ColumnDict> entry :
-                        requireEncodeSlotToDictColumn.entrySet()) {
-                        SlotId requiredEncodeSlotId = entry.getKey().getSlotId();
-                        if (requiredEncodeSlotId.equals(dictSlotDesc.getId())) {
-                            slotOffsetToDictId.put(slotDesc.getSlotOffset(), entry.getValue().getId());
-                        }
-                    }
-                }
-            }
-        }
         try {
+            ArrayList<Integer> materializedSlots = aggInfo.getMaterializedSlots_();
             originTupleIds = tupleIds;
             aggInfo = AggregateInfo.create(
                 aggInfo.getGroupingExprs(),
@@ -414,6 +386,8 @@ public class AggregationNode extends PlanNode {
                 null,
                 context.getAnalyzer());
             tupleIds = aggInfo.getOutputTupleId().asList();
+            aggInfo.setMaterializedSlots_(materializedSlots);
+            aggInfo.getMergeAggInfo().setMaterializedSlots_(materializedSlots);
             TupleDescriptor newOutputTupleDesc = aggInfo.getOutputTupleDesc();
             updateOutputSlots(newOutputTupleDesc, context);
             for (SlotDescriptor slotDescriptor : newOutputTupleDesc.getSlots()) {
@@ -487,6 +461,7 @@ public class AggregationNode extends PlanNode {
                         ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
                         if (columnDict != null) {
                             requireEncodeSlotToDictColumn.put(slotRef, columnDict);
+                            requireEncodeSlotRefList.add(slotRef);
                             context.addEncodeNeededSlot(slotId);
                         }
                         continue;

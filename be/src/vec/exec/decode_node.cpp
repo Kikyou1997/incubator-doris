@@ -53,6 +53,11 @@ Status DecodeNode::init(const TPlanNode& tnode, RuntimeState* state) {
     return Status::OK();
 }
 
+Status DecodeNode::open(RuntimeState* state) {
+    RETURN_IF_ERROR(ExecNode::open(state));
+    return child(0)->open(state);
+}
+
 Status DecodeNode::get_next(RuntimeState* state, Block* block, bool* eos) {
     Block input_block;
     bool child_eos = false;
