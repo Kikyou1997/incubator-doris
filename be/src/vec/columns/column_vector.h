@@ -116,7 +116,11 @@ protected:
     ColumnVector() {}
     ColumnVector(const size_t n) : data(n) {}
     ColumnVector(const size_t n, const value_type x) : data(n, x) {}
-    ColumnVector(const ColumnVector& src) : data(src.data.begin(), src.data.end()) {}
+    ColumnVector(const ColumnVector& src) : data(src.data.begin(), src.data.end()) {
+        if (src.has_global_dict()){
+            set_global_dict(src.get_global_dict());
+        }
+    }
 
     /// Sugar constructor.
     ColumnVector(std::initializer_list<T> il) : data {il} {}
