@@ -42,7 +42,7 @@ bool GlobalDict::encode(ColumnWithTypeAndName& col) {
     } else if (cardin <= UINT16_MAX) {
         type = std::make_shared<DataTypeUInt16>();
     } else {
-        type = std::make_shared<DataTypeUInt32>();
+        type = std::make_shared<DataTypeInt32>();
     }
 
     const ColumnString* column_str;
@@ -93,7 +93,7 @@ bool GlobalDict::encode(ColumnWithTypeAndName& col) {
             ++p;
         }
     } else {
-        UInt32* p = (UInt32*)encoded_column_data;
+        Int32* p = (Int32*)encoded_column_data;
         for (auto index : indices) {
             *p = index;
             ++p;
@@ -152,10 +152,10 @@ bool GlobalDict::decode(ColumnWithTypeAndName& col) {
             ++p;
         }
     } else {
-        assert(col.type->equals(DataTypeUInt32()));
-        UInt32* p = (UInt32*)encoded_column_data;
+        assert(col.type->equals(DataTypeInt32()));
+        Int32* p = (Int32*)encoded_column_data;
         for (size_t i = 0; i < row_num; ++i) {
-            if (*p >= value_num) {
+            if (*p >= value_num || *p < 0 ) {
                 return false;
             }
             const StringValue& val = get_value(*p);
