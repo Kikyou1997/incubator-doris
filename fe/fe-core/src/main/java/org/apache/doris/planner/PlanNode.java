@@ -992,6 +992,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
                 if (dictCodableSlot.contains(id)) {
                     disabledDictOptimizationSlotIdSet.add(id);
                 }
+                context.removeEncodeNeededSlot(id);
             }
         });
         dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);

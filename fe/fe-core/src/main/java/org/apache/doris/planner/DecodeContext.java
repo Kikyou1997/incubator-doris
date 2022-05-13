@@ -130,6 +130,14 @@ public class DecodeContext {
         encodeNeededSlotSet.add(slotId);
     }
 
+    public void removeEncodeNeededSlot(int slotId) {
+        encodeNeededSlotSet.remove(slotId);
+    }
+
+    public boolean slotNeedEncode(int slotId) {
+        return encodeNeededSlotSet.contains(slotId);
+    }
+
     public boolean needEncode() {
         return !encodeNeededSlotSet.isEmpty();
     }

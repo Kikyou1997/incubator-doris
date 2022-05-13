@@ -970,6 +970,10 @@ public class OlapScanNode extends ScanNode {
             int slotId = slotDesc.getId().asInt();
             newSlotDesc.setType(Type.INT);
             ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
+            if (columnDict == null) {
+                context.removeEncodeNeededSlot(slotId);
+                continue;
+            }
             int dictId = columnDict.getId();
             int newSlotId = newSlotDesc.getId().asInt();
             slotIdToDictId.put(newSlotId ,dictId);

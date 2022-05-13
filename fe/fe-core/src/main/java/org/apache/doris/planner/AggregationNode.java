@@ -375,7 +375,9 @@ public class AggregationNode extends PlanNode {
     @Override
     public void updateSlots(DecodeContext context) {
         for (SlotRef slotRef : requireEncodeSlotRefList) {
-            context.updateSlotRefType(slotRef);
+            if (context.slotNeedEncode(slotRef.getSlotId().asInt())) {
+                context.updateSlotRefType(slotRef);
+            }
         }
         try {
             ArrayList<Integer> materializedSlots = aggInfo.getMaterializedSlots_();
