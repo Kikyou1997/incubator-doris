@@ -77,7 +77,7 @@ public:
             vals += sizeof(Slice);
 
             if (_dict && _is_global_dict_valid) {
-                _is_global_dict_valid = _dict->find({src->data, src->size}) != _dict->end();
+                _is_global_dict_valid = _dict->find({src->data, strnlen(src->data, src->size)}) != _dict->end();
             }
         }
 
