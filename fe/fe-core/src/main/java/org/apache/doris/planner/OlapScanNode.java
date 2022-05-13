@@ -962,8 +962,8 @@ public class OlapScanNode extends ScanNode {
             .collect(Collectors.toList());
 
         desc = context.generateTupleDesc(desc.getId());
-        tupleIds.clear();
-        tupleIds.add(desc.getId());
+        originTupleIds = tupleIds;
+        tupleIds = Lists.newArrayList(desc.getId());
         List<SlotDescriptor> newSlotDescList = desc.getSlots();
         for (SlotDescriptor slotDesc : slotSet) {
             SlotDescriptor newSlotDesc =  newSlotDescList.get(slotDesc.getSlotOffset());
@@ -982,6 +982,7 @@ public class OlapScanNode extends ScanNode {
             context.mapDictSlotToDict(newSlotId, slotId);
             context.getTableDesc().putDict(dictId, columnDict);
         }
+        DictPlanner.exprUpdate(tupleIds, originTupleIds, conjuncts, context);
     }
 
 }

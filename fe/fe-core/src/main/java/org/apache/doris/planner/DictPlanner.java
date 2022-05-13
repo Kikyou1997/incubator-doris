@@ -75,23 +75,30 @@ public class DictPlanner {
         if (originTupleIdList == null) {
             return;
         }
+        exprUpdate(plan.getTupleIds(), originTupleIdList, resultExprList, context);
+    }
 
-        List<TupleDescriptor> newTupleListList = convertToTupleDescList(plan.getTupleIds());
-        List<TupleDescriptor> tupleDescriptorList =  convertToTupleDescList(originTupleIdList);
-        for (Expr expr : resultExprList) {
+    public static void exprUpdate(List<TupleId> newTupleIdList,
+                                  List<TupleId> tupleIdList,
+                                  List<Expr> exprList,
+                                  DecodeContext context) {
+        List<TupleDescriptor> newTupleDescList = convertToTupleDescList(newTupleIdList, context);
+        List<TupleDescriptor> tupleDescriptorList =  convertToTupleDescList(tupleIdList, context);
+        for (Expr expr : exprList) {
             List<SlotRef> slotRefList = new ArrayList<>();
             SlotRef.getAllSlotRefFromExpr(expr, slotRefList);
             for (SlotRef slotRef : slotRefList) {
                 SlotDescriptor slotDesc = slotRef.getDesc();
                 TupleDescriptor tupleDescriptor = slotDesc.getParent();
                 int index = tupleDescriptorList.indexOf(tupleDescriptor);
-                TupleDescriptor newTupleDesc = newTupleListList.get(index);
+                TupleDescriptor newTupleDesc = newTupleDescList.get(index);
                 slotRef.setDesc(newTupleDesc.getSlots().get(slotDesc.getSlotOffset()));
             }
         }
     }
 
-    private List<TupleDescriptor> convertToTupleDescList(List<TupleId> tupleIdList) {
+    private static  List<TupleDescriptor> convertToTupleDescList(List<TupleId> tupleIdList,
+                                                                 DecodeContext context) {
         return tupleIdList
             .stream()
             .map(id -> context.getTableDesc().getTupleDesc(id))

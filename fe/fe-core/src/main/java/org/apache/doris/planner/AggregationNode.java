@@ -405,6 +405,7 @@ public class AggregationNode extends PlanNode {
                     }
                 }
             }
+            DictPlanner.exprUpdate(tupleIds, originTupleIds, conjuncts, context);
         } catch (AnalysisException e) {
             throw new RuntimeException("Failed to create new AggInfo", e);
         }
