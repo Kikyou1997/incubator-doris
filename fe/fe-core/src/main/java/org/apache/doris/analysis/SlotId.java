@@ -23,7 +23,8 @@ package org.apache.doris.analysis;
 import org.apache.doris.common.Id;
 import org.apache.doris.common.IdGenerator;
 
-import java.util.Set;
+import java.util.Collection;
+
 
 public class SlotId extends Id<SlotId> {
     public SlotId(int id) {
@@ -39,7 +40,7 @@ public class SlotId extends Id<SlotId> {
         };
     }
 
-    public static void getAllSlotIdFromExpr(Expr expr, Set<Integer> slotRefSet) {
+    public static void getAllSlotIdFromExpr(Expr expr, Collection<Integer> slotRefSet) {
         if (expr instanceof SlotRef) {
             SlotRef slotRef = (SlotRef) expr;
             slotRefSet.add(slotRef.getSlotId().asInt());

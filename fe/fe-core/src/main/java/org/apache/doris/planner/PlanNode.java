@@ -21,7 +21,16 @@
 package org.apache.doris.planner;
 
 import com.google.common.collect.Maps;
-import org.apache.doris.analysis.*;
+import org.apache.doris.analysis.Analyzer;
+import org.apache.doris.analysis.CompoundPredicate;
+import org.apache.doris.analysis.Expr;
+import org.apache.doris.analysis.ExprId;
+import org.apache.doris.analysis.ExprSubstitutionMap;
+import org.apache.doris.analysis.FunctionName;
+import org.apache.doris.analysis.SlotId;
+import org.apache.doris.analysis.SlotRef;
+import org.apache.doris.analysis.TupleDescriptor;
+import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.Function;
 import org.apache.doris.catalog.Type;
 import org.apache.doris.common.AnalysisException;
@@ -977,9 +986,12 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
         Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
         // TODO: some predicate could also be optimized by global dict, we will support it in the future
         conjuncts.forEach(e -> {
-            int srcSlotId = e.getSrcSlotRef().getId().asInt();
-            if (dictCodableSlot.contains(srcSlotId)) {
-                disabledDictOptimizationSlotIdSet.add(srcSlotId);
+            List<Integer> slotIdList = new ArrayList<>();
+            SlotId.getAllSlotIdFromExpr(e, slotIdList);
+            for (Integer id : slotIdList) {
+                if (dictCodableSlot.contains(id)) {
+                    disabledDictOptimizationSlotIdSet.add(id);
+                }
             }
         });
         dictCodableSlot.removeAll(disabledDictOptimizationSlotIdSet);
