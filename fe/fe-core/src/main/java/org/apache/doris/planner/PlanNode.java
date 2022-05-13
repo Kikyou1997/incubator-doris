@@ -991,4 +991,7 @@ abstract public class PlanNode extends TreeNode<PlanNode> {
 
     public void generateDecodeNode(DecodeContext decodeContext) {}
 
+    public ArrayList<TupleId> getOriginTupleIds() {
+        return originTupleIds;
+    }
 }

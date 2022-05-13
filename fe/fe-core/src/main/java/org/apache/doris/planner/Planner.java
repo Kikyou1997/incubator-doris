@@ -182,7 +182,8 @@ public class Planner {
         }
 
         if (VectorizedUtil.isVectorized() && ConnectContext.get().getSessionVariable().isEnableLowCardinalityOpt()) {
-            DictPlanner dictPlanner = new DictPlanner(plannerContext, analyzer.getDescTbl(), analyzer);
+            DictPlanner dictPlanner = new DictPlanner(plannerContext,
+                analyzer.getDescTbl(), analyzer, queryStmt.getResultExprs());
             singleNodePlan = dictPlanner.plan(singleNodePlan);
         }
 

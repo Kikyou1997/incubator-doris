@@ -17,23 +17,36 @@
 
 package org.apache.doris.planner;
 
+
 import org.apache.doris.analysis.Analyzer;
 import org.apache.doris.analysis.DescriptorTable;
+import org.apache.doris.analysis.Expr;
 import org.apache.doris.analysis.SlotDescriptor;
+import org.apache.doris.analysis.SlotRef;
 import org.apache.doris.analysis.TupleDescriptor;
+import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.Column;
 import org.apache.doris.statistics.ColumnDict;
 import org.apache.doris.statistics.IDictManager;
 
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DictPlanner {
 
     private final DecodeContext context;
 
-    public DictPlanner(PlannerContext ctx, DescriptorTable tableDesc, Analyzer analyzer) {
+    private List<Expr> resultExprList;
+
+    public DictPlanner(PlannerContext ctx,
+                       DescriptorTable tableDesc,
+                       Analyzer analyzer,
+                       List<Expr> resultExprList) {
         this.context = new DecodeContext(ctx, tableDesc, analyzer);
+        this.resultExprList = resultExprList;
     }
 
     public PlanNode plan(PlanNode plan) {
@@ -50,10 +63,39 @@ public class DictPlanner {
             generateDecodeNode(null, plan);
 
             plan = insertDecodeNode(null, plan);
-        }
 
+            handleResultExpr(plan);
+        }
         return plan;
 
+    }
+
+    private void handleResultExpr(PlanNode plan) {
+        List<TupleId> originTupleIdList = plan.getOriginTupleIds();
+        if (originTupleIdList == null) {
+            return;
+        }
+
+        List<TupleDescriptor> newTupleListList = convertToTupleDescList(plan.getTupleIds());
+        List<TupleDescriptor> tupleDescriptorList =  convertToTupleDescList(originTupleIdList);
+        for (Expr expr : resultExprList) {
+            List<SlotRef> slotRefList = new ArrayList<>();
+            SlotRef.getAllSlotRefFromExpr(expr, slotRefList);
+            for (SlotRef slotRef : slotRefList) {
+                SlotDescriptor slotDesc = slotRef.getDesc();
+                TupleDescriptor tupleDescriptor = slotDesc.getParent();
+                int index = tupleDescriptorList.indexOf(tupleDescriptor);
+                TupleDescriptor newTupleDesc = newTupleListList.get(index);
+                slotRef.setDesc(newTupleDesc.getSlots().get(slotDesc.getSlotOffset()));
+            }
+        }
+    }
+
+    private List<TupleDescriptor> convertToTupleDescList(List<TupleId> tupleIdList) {
+        return tupleIdList
+            .stream()
+            .map(id -> context.getTableDesc().getTupleDesc(id))
+            .collect(Collectors.toList());
     }
 
 
