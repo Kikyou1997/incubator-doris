@@ -42,6 +42,8 @@ public class DecodeContext {
 
     private final Set<Integer> dictOptimizationDisabledSlot = new HashSet<>();
 
+    private final Map<TupleId, TupleId> oldTupleIdToNewTupleId = new HashMap<>();
+
     private final DescriptorTable tableDescriptor;
 
     private final Analyzer analyzer;
@@ -49,6 +51,8 @@ public class DecodeContext {
     private final PlannerContext ctx_;
 
     private final Map<PlanNode, DecodeNode> childToDecodeNode = new HashMap<>();
+
+    private Map<AggregationNode, AggregateInfo> childAggToSecondAggInfo = new HashMap<>();
 
     public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor, Analyzer analyzer) {
         this.ctx_ = ctx_;
@@ -188,4 +192,32 @@ public class DecodeContext {
     public ColumnDict getColumnDictByDictSlotId(int id) {
         return dictSlotIdToColumnDict.get(id);
     }
+
+    public void putNewFatherAgg(AggregationNode child, AggregateInfo secondAggInfo) {
+        if (childAggToSecondAggInfo == null) {
+            childAggToSecondAggInfo = new HashMap<>();
+        }
+        childAggToSecondAggInfo.put(child, secondAggInfo);
+    }
+
+    public PlanNodeId generateNextNodeId() {
+        return ctx_.getNextNodeId();
+    }
+
+    public AggregateInfo getSecondPhaseAggInfo(AggregationNode aggNode) {
+        return childAggToSecondAggInfo.get(aggNode);
+    }
+
+    public void mapOldToNewTupleId(TupleId oldId, TupleId newId) {
+        oldTupleIdToNewTupleId.put(oldId, newId);
+    }
+
+    public TupleId getNewTupleId(TupleId oldId) {
+        return oldTupleIdToNewTupleId.get(oldId);
+    }
+
+    public boolean mayNeedUpdate() {
+        return !oldTupleIdToNewTupleId.isEmpty();
+    }
+
 }

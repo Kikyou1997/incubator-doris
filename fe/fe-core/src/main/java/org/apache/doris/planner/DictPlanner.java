@@ -80,8 +80,11 @@ public class DictPlanner {
 
     public static void exprUpdate(List<TupleId> newTupleIdList,
                                   List<TupleId> tupleIdList,
-                                  List<Expr> exprList,
+                                  List<? extends Expr> exprList,
                                   DecodeContext context) {
+        if (exprList == null) {
+            return;
+        }
         List<TupleDescriptor> newTupleDescList = convertToTupleDescList(newTupleIdList, context);
         List<TupleDescriptor> tupleDescriptorList =  convertToTupleDescList(tupleIdList, context);
         for (Expr expr : exprList) {
@@ -91,8 +94,10 @@ public class DictPlanner {
                 SlotDescriptor slotDesc = slotRef.getDesc();
                 TupleDescriptor tupleDescriptor = slotDesc.getParent();
                 int index = tupleDescriptorList.indexOf(tupleDescriptor);
-                TupleDescriptor newTupleDesc = newTupleDescList.get(index);
-                slotRef.setDesc(newTupleDesc.getSlots().get(slotDesc.getSlotOffset()));
+                if (index > -1) {
+                    TupleDescriptor newTupleDesc = newTupleDescList.get(index);
+                    slotRef.setDesc(newTupleDesc.getSlots().get(slotDesc.getSlotOffset()));
+                }
             }
         }
     }

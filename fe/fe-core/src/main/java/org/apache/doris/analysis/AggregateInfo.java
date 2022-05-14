@@ -318,6 +318,10 @@ public final class AggregateInfo extends AggregateInfoBase {
             groupingExprs_.addAll(expr0Children);
         } 
 
+        if (distinctAggExprs_ == null) {
+            distinctAggExprs_ = new ArrayList<>();
+            distinctAggExprs_.addAll(distinctAggExprs);
+        }
         // remove DISTINCT aggregate functions from aggExprs
         aggregateExprs_.removeAll(distinctAggExprs);
 
@@ -364,6 +368,10 @@ public final class AggregateInfo extends AggregateInfoBase {
 
     public AggregateInfo getSecondPhaseDistinctAggInfo() {
         return secondPhaseDistinctAggInfo_;
+    }
+
+    public void setSecondPhaseDistinctAggInfo_(AggregateInfo secondPhaseDistinctAggInfo_) {
+        this.secondPhaseDistinctAggInfo_ = secondPhaseDistinctAggInfo_;
     }
 
     /**
@@ -829,5 +837,9 @@ public final class AggregateInfo extends AggregateInfoBase {
 
     public List<Expr> getInputPartitionExprs() {
         return partitionExprs_ != null ? partitionExprs_ : groupingExprs_;
+    }
+
+    public AggPhase getAggPhase_() {
+        return aggPhase_;
     }
 }

@@ -73,6 +73,8 @@ public abstract class AggregateInfoBase {
     // Populated in materializeRequiredSlots() which must be implemented by subclasses.
     protected ArrayList<Integer> materializedSlots_ = Lists.newArrayList();
 
+    protected ArrayList<FunctionCallExpr> distinctAggExprs_;
+
     protected AggregateInfoBase(ArrayList<Expr> groupingExprs,
                                 ArrayList<FunctionCallExpr> aggExprs)  {
         Preconditions.checkState(groupingExprs != null || aggExprs != null);
@@ -261,4 +263,8 @@ public abstract class AggregateInfoBase {
     }
 
     protected abstract String tupleDebugName();
+
+    public ArrayList<FunctionCallExpr> getDistinctAggExprs_() {
+        return distinctAggExprs_;
+    }
 }
