@@ -447,11 +447,16 @@ public class AggregationNode extends PlanNode {
                 aggInfo.getMergeAggInfo().setMaterializedSlots_(materializedSlots);
                 if (aggInfo.isDistinctAgg()) {
                     AggregateInfo secondPhaseAggInfo =  aggInfo.getSecondPhaseDistinctAggInfo();
+                    AggregateInfo originMergeAggInfoOfSecondPhaseAgg = origin.getSecondPhaseDistinctAggInfo().getMergeAggInfo();
                     secondPhaseAggInfo.setMaterializedSlots_(origin.getSecondPhaseDistinctAggInfo().getMaterializedSlots_());
+                    secondPhaseAggInfo.getMergeAggInfo().setMaterializedSlots_(originMergeAggInfoOfSecondPhaseAgg.getMaterializedSlots_());
                     context.putNewFatherAgg(this, secondPhaseAggInfo);
                 }
                 TupleDescriptor newOutputTupleDesc = aggInfo.getOutputTupleDesc();
                 updateOutputSlots(newOutputTupleDesc, context);
+                // below logic is necessary for the DecodeNode generation,
+                // we generate DecodeNode when the output slot have intersection
+                // with the keySet of DecodeContext::dictSlotIdToColumnDict
                 for (SlotDescriptor slotDescriptor : newOutputTupleDesc.getSlots()) {
                     slotDescriptor.setIsMaterialized(true);
                     for (Expr expr: slotDescriptor.getSourceExprs()) {
