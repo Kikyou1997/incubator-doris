@@ -54,6 +54,8 @@ public class DecodeContext {
 
     private Map<AggregationNode, AggregateInfo> childAggToSecondAggInfo = new HashMap<>();
 
+    private boolean containsUnsupportedOpt = false;
+
     public DecodeContext(PlannerContext ctx_, DescriptorTable tableDescriptor, Analyzer analyzer) {
         this.ctx_ = ctx_;
         this.tableDescriptor = tableDescriptor;
@@ -81,6 +83,9 @@ public class DecodeContext {
         return dictOptimizationDisabledSlot;
     }
 
+    public boolean dictOptForbiddenForSlot(int slotId) {
+        return dictOptimizationDisabledSlot.contains(slotId);
+    }
 
     public TupleDescriptor generateTupleDesc(TupleId src) {
         TupleDescriptor originTupleDesc = tableDescriptor.getTupleDesc(src);
@@ -143,7 +148,7 @@ public class DecodeContext {
     }
 
     public boolean needEncode() {
-        return !encodeNeededSlotSet.isEmpty();
+        return !encodeNeededSlotSet.isEmpty() && !containsUnsupportedOpt;
     }
 
     public DescriptorTable getTableDesc() {
@@ -216,8 +221,7 @@ public class DecodeContext {
         return oldTupleIdToNewTupleId.get(oldId);
     }
 
-    public boolean mayNeedUpdate() {
-        return !oldTupleIdToNewTupleId.isEmpty();
+    public void setContainsUnsupportedOpt(boolean containsUnsupportedOpt) {
+        this.containsUnsupportedOpt = containsUnsupportedOpt;
     }
-
 }

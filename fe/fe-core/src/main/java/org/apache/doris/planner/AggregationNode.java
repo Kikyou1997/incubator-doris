@@ -532,7 +532,7 @@ public class AggregationNode extends PlanNode {
                     if (column != null) {
                         int slotId = slotRef.getSlotId().asInt();
                         ColumnDict columnDict = context.getColumnDictBySlotId(slotId);
-                        if (columnDict != null) {
+                        if (columnDict != null && !context.dictOptForbiddenForSlot(slotId)) {
                             requireEncodeSlotToDictColumn.put(slotRef, columnDict);
                             requireEncodeSlotRefList.add(slotRef);
                             context.addEncodeNeededSlot(slotId);

@@ -29,7 +29,6 @@ import org.apache.doris.catalog.Column;
 import org.apache.doris.statistics.ColumnDict;
 import org.apache.doris.statistics.IDictManager;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

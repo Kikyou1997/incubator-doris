@@ -266,4 +266,10 @@ public class SortNode extends PlanNode {
             LOG.debug("sort input exprs: " + Expr.debugString(resolvedTupleExprs));
         }
     }
+
+    @Override
+    public void filterDictSlot(DecodeContext context) {
+        context.setContainsUnsupportedOpt(true);
+    }
+
 }

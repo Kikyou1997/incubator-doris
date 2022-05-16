@@ -20,13 +20,6 @@
 
 package org.apache.doris.planner;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-
 import com.clearspring.analytics.util.Lists;
 import org.apache.doris.analysis.Analyzer;
 import org.apache.doris.analysis.SlotDescriptor;
@@ -38,6 +31,12 @@ import org.apache.doris.thrift.TExplainLevel;
 import org.apache.doris.thrift.TPlanNode;
 import org.apache.doris.thrift.TPlanNodeType;
 
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+
 public class DecodeNode extends PlanNode {
     private Map<Integer, Integer> slotIdToDictId;
 
@@ -48,6 +47,7 @@ public class DecodeNode extends PlanNode {
         this.addChild(child);
         this.tblRefIds = child.tblRefIds;
         this.slotIdToDictId = slotIdToDictId;
+        this.outputSmap = child.getOutputSmap();
     }
 
     public void setSlotIdToDictId(Map<Integer, Integer> slotIdToDictId) {

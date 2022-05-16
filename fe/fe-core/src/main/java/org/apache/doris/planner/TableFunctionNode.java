@@ -179,5 +179,11 @@ public class TableFunctionNode extends PlanNode {
             msg.table_function_node.addToOutputSlotIds(slotId.asInt());
         }
     }
+
+    @Override
+    public void filterDictSlot(DecodeContext context) {
+        context.setContainsUnsupportedOpt(true);
+    }
+
 }
 

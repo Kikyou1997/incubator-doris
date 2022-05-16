@@ -768,13 +768,6 @@ public class HashJoinNode extends PlanNode {
 
     @Override
     public void filterDictSlot(DecodeContext context) {
-        Set<Integer> disabledDictOptimizationSlotIdSet = context.getDictOptimizationDisabledSlot();
-        eqJoinConjuncts.forEach(e -> {
-            SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
-        });
-        otherJoinConjuncts.forEach(e -> {
-            SlotId.getAllSlotIdFromExpr(e, disabledDictOptimizationSlotIdSet);
-        });
-        super.filterDictSlot(context);
+        context.setContainsUnsupportedOpt(true);
     }
 }
