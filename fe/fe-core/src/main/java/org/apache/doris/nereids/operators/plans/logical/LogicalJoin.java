@@ -33,7 +33,7 @@ import java.util.Optional;
 /**
  * Logical join plan operator.
  */
-public class LogicalJoin extends LogicalBinaryOperator {
+public class LogicalJoin extends LogicalOperator {
 
     private final JoinType joinType;
     private final Optional<Expression> condition;
@@ -71,7 +71,9 @@ public class LogicalJoin extends LogicalBinaryOperator {
     }
 
     @Override
-    public List<Slot> computeOutput(Plan leftInput, Plan rightInput) {
+    public List<Slot> computeOutput(Plan... plans) {
+        Plan leftInput = plans[0];
+        Plan rightInput = plans[1];
         switch (joinType) {
             case LEFT_SEMI_JOIN:
                 return ImmutableList.copyOf(leftInput.getOutput());

@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * Physical filter plan operator.
  */
-public class PhysicalFilter extends PhysicalUnaryOperator {
+public class PhysicalFilter extends PhysicalOperator {
 
     private final Expression predicates;
 

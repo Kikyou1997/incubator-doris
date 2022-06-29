@@ -18,7 +18,7 @@
 package org.apache.doris.nereids.trees.plans;
 
 import org.apache.doris.nereids.memo.GroupExpression;
-import org.apache.doris.nereids.operators.plans.PlanOperator;
+import org.apache.doris.nereids.operators.Operator;
 import org.apache.doris.nereids.properties.LogicalProperties;
 import org.apache.doris.nereids.trees.TreeNode;
 import org.apache.doris.nereids.trees.expressions.Slot;
@@ -32,7 +32,7 @@ import java.util.Optional;
  */
 public interface Plan extends TreeNode<Plan>, PlanStats {
 
-    PlanOperator getOperator();
+    Operator getOperator();
 
     LogicalProperties getLogicalProperties();
 

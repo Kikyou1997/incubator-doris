@@ -17,7 +17,7 @@
 
 package org.apache.doris.nereids.trees.plans;
 
-import org.apache.doris.nereids.operators.plans.UnaryPlanOperator;
+import org.apache.doris.nereids.operators.Operator;
 import org.apache.doris.nereids.trees.UnaryNode;
 
 /**
@@ -27,5 +27,5 @@ public interface UnaryPlan<CHILD_TYPE extends Plan>
         extends Plan, UnaryNode<Plan, CHILD_TYPE> {
 
     @Override
-    UnaryPlanOperator getOperator();
+    Operator getOperator();
 }

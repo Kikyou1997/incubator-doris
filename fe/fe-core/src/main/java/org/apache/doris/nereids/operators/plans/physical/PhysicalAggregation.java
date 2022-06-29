@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * Physical aggregation plan operator.
  */
-public class PhysicalAggregation extends PhysicalUnaryOperator {
+public class PhysicalAggregation extends PhysicalOperator {
 
     private final List<Expression> groupByExprList;
 

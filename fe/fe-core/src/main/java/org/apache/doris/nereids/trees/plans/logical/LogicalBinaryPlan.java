@@ -18,7 +18,7 @@
 package org.apache.doris.nereids.trees.plans.logical;
 
 import org.apache.doris.nereids.memo.GroupExpression;
-import org.apache.doris.nereids.operators.plans.logical.LogicalBinaryOperator;
+import org.apache.doris.nereids.operators.plans.logical.LogicalOperator;
 import org.apache.doris.nereids.properties.LogicalProperties;
 import org.apache.doris.nereids.trees.NodeType;
 import org.apache.doris.nereids.trees.expressions.Slot;
@@ -34,7 +34,7 @@ import java.util.Optional;
  * Abstract class for all logical plan that have two children.
  */
 public class LogicalBinaryPlan<
-            OP_TYPE extends LogicalBinaryOperator,
+            OP_TYPE extends LogicalOperator,
             LEFT_CHILD_TYPE extends Plan,
             RIGHT_CHILD_TYPE extends Plan>
         extends AbstractLogicalPlan<OP_TYPE>

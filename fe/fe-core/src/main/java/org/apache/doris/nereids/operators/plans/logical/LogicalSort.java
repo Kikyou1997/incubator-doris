@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * sortItems: list of column information after order by. eg:[a, asc],[b, desc].
  * SortItems: Contains order expression information and sorting method. Default is ascending.
  */
-public class LogicalSort extends LogicalUnaryOperator {
+public class LogicalSort extends LogicalOperator {
 
     private List<SortItems> sortItems;
 
@@ -54,8 +54,8 @@ public class LogicalSort extends LogicalUnaryOperator {
     }
 
     @Override
-    public List<Slot> computeOutput(Plan input) {
-        return input.getOutput();
+    public List<Slot> computeOutput(Plan... inputs) {
+        return inputs[0].getOutput();
     }
 
     /**

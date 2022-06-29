@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 /**
  * Physical sort plan operator.
  */
-public class PhysicalSort extends PhysicalUnaryOperator {
+public class PhysicalSort extends PhysicalOperator {
 
     private final int offset;
 

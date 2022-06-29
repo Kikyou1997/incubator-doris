@@ -28,25 +28,30 @@ package org.apache.doris.nereids.operators;
  *        but these operators cannot be used in rules
  */
 public enum OperatorType {
-    UNKNOWN,
+    UNKNOWN(Integer.MIN_VALUE),
 
     // logical plan
-    LOGICAL_UNBOUND_RELATION,
-    LOGICAL_BOUND_RELATION,
-    LOGICAL_PROJECT,
-    LOGICAL_FILTER,
-    LOGICAL_JOIN,
-    LOGICAL_AGGREGATION,
-    LOGICAL_SORT,
-    GROUP_PLAN,
+    LOGICAL_UNBOUND_RELATION(0),
+    LOGICAL_BOUND_RELATION(0),
+    LOGICAL_PROJECT(1),
+    LOGICAL_FILTER(1),
+    LOGICAL_JOIN(2),
+    LOGICAL_AGGREGATION(1),
+    LOGICAL_SORT(1),
+    GROUP_PLAN(0),
 
     // physical plan
-    PHYSICAL_OLAP_SCAN,
-    PHYSICAL_PROJECT,
-    PHYSICAL_FILTER,
-    PHYSICAL_BROADCAST_HASH_JOIN,
-    PHYSICAL_AGGREGATION,
-    PHYSICAL_SORT,
-    PHYSICAL_HASH_JOIN,
-    PHYSICAL_EXCHANGE;
+    PHYSICAL_OLAP_SCAN(0),
+    PHYSICAL_PROJECT(1),
+    PHYSICAL_FILTER(1),
+    PHYSICAL_BROADCAST_HASH_JOIN(2),
+    PHYSICAL_AGGREGATION(1),
+    PHYSICAL_SORT(1),
+    PHYSICAL_HASH_JOIN(2);
+
+    public final int childCount;
+
+    OperatorType(int childCount) {
+        this.childCount = childCount;
+    }
 }

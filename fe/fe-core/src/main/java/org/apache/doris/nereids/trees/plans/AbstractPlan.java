@@ -18,7 +18,7 @@
 package org.apache.doris.nereids.trees.plans;
 
 import org.apache.doris.nereids.memo.GroupExpression;
-import org.apache.doris.nereids.operators.plans.PlanOperator;
+import org.apache.doris.nereids.operators.Operator;
 import org.apache.doris.nereids.properties.LogicalProperties;
 import org.apache.doris.nereids.trees.AbstractTreeNode;
 import org.apache.doris.nereids.trees.NodeType;
@@ -37,7 +37,7 @@ import java.util.Optional;
 /**
  * Abstract class for all concrete plan node.
  */
-public abstract class AbstractPlan<OP_TYPE extends PlanOperator>
+public abstract class AbstractPlan<OP_TYPE extends Operator>
         extends AbstractTreeNode<Plan> implements Plan {
 
     public final OP_TYPE operator;

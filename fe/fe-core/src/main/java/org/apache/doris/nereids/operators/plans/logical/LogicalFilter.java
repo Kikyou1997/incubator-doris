@@ -30,7 +30,7 @@ import java.util.Objects;
 /**
  * Logical filter plan operator.
  */
-public class LogicalFilter extends LogicalUnaryOperator {
+public class LogicalFilter extends LogicalOperator {
     private final Expression predicates;
 
     public LogicalFilter(Expression predicates) {
@@ -43,8 +43,8 @@ public class LogicalFilter extends LogicalUnaryOperator {
     }
 
     @Override
-    public List<Slot> computeOutput(Plan input) {
-        return input.getOutput();
+    public List<Slot> computeOutput(Plan... inputs) {
+        return inputs[0].getOutput();
     }
 
     @Override

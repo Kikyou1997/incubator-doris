@@ -19,21 +19,60 @@ package org.apache.doris.nereids.operators;
 
 import org.apache.doris.nereids.OperatorVisitor;
 import org.apache.doris.nereids.memo.GroupExpression;
-import org.apache.doris.nereids.trees.TreeNode;
+import org.apache.doris.nereids.trees.expressions.Expression;
 import org.apache.doris.nereids.trees.plans.Plan;
 import org.apache.doris.nereids.trees.plans.PlanOperatorVisitor;
 
+import java.util.List;
+import java.util.Objects;
+
 /**
- * interface for all concrete operator.
+ * Abstract class for all concrete operator.
  */
-public interface Operator {
-    OperatorType getType();
+public abstract class Operator {
+    protected final OperatorType type;
+    protected final long limited;
 
-    <NODE_TYPE extends TreeNode<NODE_TYPE>> NODE_TYPE toTreeNode(GroupExpression groupExpression);
+    public Operator(OperatorType type) {
+        this.type = Objects.requireNonNull(type, "type can not be null");
+        this.limited = -1;
+    }
 
-    <R, C> R accept(PlanOperatorVisitor<R, C> visitor, Plan plan, C context);
+    public Operator(OperatorType type, long limited) {
+        this.type = type;
+        this.limited = limited;
+    }
 
-    <R, C> R accept(OperatorVisitor<R, C> visitor, Operator operator, C context);
+    public OperatorType getType() {
+        return type;
+    }
 
-    <R, C> R accept(OperatorVisitor<R, C> visitor, C context);
+    /**
+     * Child operator should overwrite this method.
+     * for example:
+     * <code>
+     * visitor.visitPhysicalOlapScanPlan(
+     * (PhysicalPlan<? extends PhysicalPlan, PhysicalOlapScan>) plan, context);
+     * </code>
+     */
+    public <R, C> R accept(PlanOperatorVisitor<R, C> visitor, Plan plan, C context) {
+        return null;
+    }
+
+    public <R, C> R accept(OperatorVisitor<R, C> visitor, C context) {
+        return visitor.visitOperator(this, context);
+    }
+
+    public <R, C> R accept(OperatorVisitor<R, C> visitor, Operator operator, C context) {
+        return null;
+    }
+
+    public long getLimited() {
+        return limited;
+    }
+
+    public abstract Plan toTreeNode(GroupExpression groupExpression);
+
+    public abstract List<Expression> getExpressions();
+
 }

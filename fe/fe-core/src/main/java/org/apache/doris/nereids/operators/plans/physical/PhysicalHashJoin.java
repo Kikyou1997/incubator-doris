@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * Physical hash join plan operator.
  */
-public class PhysicalHashJoin extends PhysicalBinaryOperator {
+public class PhysicalHashJoin extends PhysicalOperator {
 
     private final JoinType joinType;
 

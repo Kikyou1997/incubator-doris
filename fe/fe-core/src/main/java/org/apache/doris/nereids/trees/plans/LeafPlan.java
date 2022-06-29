@@ -17,7 +17,7 @@
 
 package org.apache.doris.nereids.trees.plans;
 
-import org.apache.doris.nereids.operators.plans.LeafPlanOperator;
+import org.apache.doris.nereids.operators.Operator;
 import org.apache.doris.nereids.trees.LeafNode;
 
 /**
@@ -26,7 +26,7 @@ import org.apache.doris.nereids.trees.LeafNode;
 public interface LeafPlan extends Plan, LeafNode<Plan> {
 
     @Override
-    LeafPlanOperator getOperator();
+    Operator getOperator();
 
     @Override
     default int arity() {

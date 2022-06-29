@@ -17,13 +17,55 @@
 
 package org.apache.doris.nereids.operators.plans.logical;
 
-import org.apache.doris.nereids.operators.plans.PlanOperator;
+import org.apache.doris.nereids.memo.GroupExpression;
+import org.apache.doris.nereids.operators.Operator;
+import org.apache.doris.nereids.operators.OperatorType;
 import org.apache.doris.nereids.properties.LogicalProperties;
+import org.apache.doris.nereids.trees.expressions.Slot;
+import org.apache.doris.nereids.trees.plans.GroupPlan;
 import org.apache.doris.nereids.trees.plans.Plan;
+import org.apache.doris.nereids.trees.plans.logical.LogicalBinaryPlan;
+import org.apache.doris.nereids.trees.plans.logical.LogicalLeafPlan;
+import org.apache.doris.nereids.trees.plans.logical.LogicalPlan;
+import org.apache.doris.nereids.trees.plans.logical.LogicalUnaryPlan;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * interface for all concrete logical plan operator.
  */
-public interface LogicalOperator extends PlanOperator {
-    LogicalProperties computeLogicalProperties(Plan... inputs);
+public abstract class LogicalOperator extends Operator {
+    public LogicalOperator(OperatorType type) {
+        super(type);
+    }
+
+    public LogicalOperator(OperatorType type, long limited) {
+        super(type, limited);
+    }
+
+    public LogicalProperties computeLogicalProperties(Plan... inputs) {
+        return new LogicalProperties(() -> computeOutput(inputs));
+    }
+
+    public abstract List<Slot> computeOutput(Plan... inputs);
+
+    @Override
+    public LogicalPlan toTreeNode(GroupExpression groupExpression) {
+        LogicalProperties logicalProperties = groupExpression.getParent().getLogicalProperties();
+        switch (type.childCount) {
+            case 0:
+                return new LogicalLeafPlan(this, Optional.of(groupExpression), Optional.of(logicalProperties));
+            case 1:
+                return new LogicalUnaryPlan(this, Optional.of(groupExpression),
+                        Optional.of(logicalProperties), new GroupPlan(groupExpression.child(0)));
+            case 2:
+                return new LogicalBinaryPlan(this, Optional.of(groupExpression),
+                        Optional.of(logicalProperties), new GroupPlan(groupExpression.child(0)),
+                        new GroupPlan(groupExpression.child(1)));
+            default:
+                throw new RuntimeException(String.format("Unexpected children count: %d", type.childCount));
+        }
+
+    }
 }

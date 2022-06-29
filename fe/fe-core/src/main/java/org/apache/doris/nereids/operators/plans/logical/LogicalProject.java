@@ -32,7 +32,7 @@ import java.util.Objects;
 /**
  * Logical project plan operator.
  */
-public class LogicalProject extends LogicalUnaryOperator {
+public class LogicalProject extends LogicalOperator {
 
     private final List<NamedExpression> projects;
 
@@ -56,7 +56,7 @@ public class LogicalProject extends LogicalUnaryOperator {
     }
 
     @Override
-    public List<Slot> computeOutput(Plan input) {
+    public List<Slot> computeOutput(Plan... inputs) {
         return projects.stream()
                 .map(NamedExpression::toSlot)
                 .collect(ImmutableList.toImmutableList());

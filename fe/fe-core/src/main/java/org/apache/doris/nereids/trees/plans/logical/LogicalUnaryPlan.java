@@ -18,7 +18,7 @@
 package org.apache.doris.nereids.trees.plans.logical;
 
 import org.apache.doris.nereids.memo.GroupExpression;
-import org.apache.doris.nereids.operators.plans.logical.LogicalUnaryOperator;
+import org.apache.doris.nereids.operators.plans.logical.LogicalOperator;
 import org.apache.doris.nereids.properties.LogicalProperties;
 import org.apache.doris.nereids.trees.NodeType;
 import org.apache.doris.nereids.trees.expressions.Slot;
@@ -33,7 +33,7 @@ import java.util.Optional;
 /**
  * Abstract class for all logical plan that have one child.
  */
-public class LogicalUnaryPlan<OP_TYPE extends LogicalUnaryOperator, CHILD_TYPE extends Plan>
+public class LogicalUnaryPlan<OP_TYPE extends LogicalOperator, CHILD_TYPE extends Plan>
         extends AbstractLogicalPlan<OP_TYPE>
         implements UnaryPlan<CHILD_TYPE> {
 

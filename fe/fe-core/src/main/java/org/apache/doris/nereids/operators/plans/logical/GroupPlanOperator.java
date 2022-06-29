@@ -31,7 +31,7 @@ import java.util.List;
 
 
 /** GroupPlanOperator. */
-public class GroupPlanOperator extends LogicalLeafOperator {
+public class GroupPlanOperator extends LogicalOperator {
     public GroupPlanOperator() {
         super(OperatorType.GROUP_PLAN);
     }
@@ -42,7 +42,7 @@ public class GroupPlanOperator extends LogicalLeafOperator {
     }
 
     @Override
-    public List<Slot> computeOutput() {
+    public List<Slot> computeOutput(Plan... inputs) {
         throw new IllegalStateException("GroupPlanOperator can not compute output."
             + " You should invoke GroupPlan.getOutput()");
     }

@@ -18,7 +18,7 @@
 package org.apache.doris.nereids.trees.plans.logical;
 
 import org.apache.doris.nereids.memo.GroupExpression;
-import org.apache.doris.nereids.operators.plans.logical.LogicalLeafOperator;
+import org.apache.doris.nereids.operators.plans.logical.LogicalOperator;
 import org.apache.doris.nereids.properties.LogicalProperties;
 import org.apache.doris.nereids.trees.NodeType;
 import org.apache.doris.nereids.trees.expressions.Slot;
@@ -33,7 +33,7 @@ import java.util.Optional;
 /**
  * Abstract class for all logical plan that have no child.
  */
-public class LogicalLeafPlan<OP_TYPE extends LogicalLeafOperator>
+public class LogicalLeafPlan<OP_TYPE extends LogicalOperator>
         extends AbstractLogicalPlan<OP_TYPE>
         implements LeafPlan {
 

@@ -18,7 +18,7 @@
 package org.apache.doris.nereids.trees.plans.physical;
 
 import org.apache.doris.nereids.memo.GroupExpression;
-import org.apache.doris.nereids.operators.plans.physical.PhysicalLeafOperator;
+import org.apache.doris.nereids.operators.plans.physical.PhysicalOperator;
 import org.apache.doris.nereids.properties.LogicalProperties;
 import org.apache.doris.nereids.trees.NodeType;
 import org.apache.doris.nereids.trees.expressions.Slot;
@@ -33,7 +33,7 @@ import java.util.Optional;
 /**
  * Abstract class for all physical plan that have no child.
  */
-public class PhysicalLeafPlan<OP_TYPE extends PhysicalLeafOperator>
+public class PhysicalLeafPlan<OP_TYPE extends PhysicalOperator>
         extends AbstractPhysicalPlan<OP_TYPE>
         implements LeafPlan {
 

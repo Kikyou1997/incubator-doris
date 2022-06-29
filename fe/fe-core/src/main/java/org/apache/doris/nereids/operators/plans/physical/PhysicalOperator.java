@@ -17,10 +17,45 @@
 
 package org.apache.doris.nereids.operators.plans.physical;
 
-import org.apache.doris.nereids.operators.plans.PlanOperator;
+import org.apache.doris.nereids.memo.GroupExpression;
+import org.apache.doris.nereids.operators.Operator;
+import org.apache.doris.nereids.operators.OperatorType;
+import org.apache.doris.nereids.properties.LogicalProperties;
+import org.apache.doris.nereids.trees.plans.GroupPlan;
+import org.apache.doris.nereids.trees.plans.Plan;
+import org.apache.doris.nereids.trees.plans.physical.PhysicalBinaryPlan;
+import org.apache.doris.nereids.trees.plans.physical.PhysicalLeafPlan;
+import org.apache.doris.nereids.trees.plans.physical.PhysicalUnaryPlan;
+
+import java.util.Optional;
 
 /**
  * interface for all concrete physical operator.
  */
-public interface PhysicalOperator extends PlanOperator {
+public abstract class PhysicalOperator extends Operator {
+
+    public PhysicalOperator(OperatorType type) {
+        super(type);
+    }
+
+    public PhysicalOperator(OperatorType type, long limited) {
+        super(type, limited);
+    }
+
+    @Override
+    public Plan toTreeNode(GroupExpression groupExpression) {
+        LogicalProperties logicalProperties = groupExpression.getParent().getLogicalProperties();
+        switch (type.childCount) {
+            case 0:
+                return new PhysicalLeafPlan(this, Optional.of(groupExpression), logicalProperties);
+            case 1:
+                return new PhysicalUnaryPlan(this, Optional.of(groupExpression), logicalProperties,
+                        new GroupPlan(groupExpression.child(0)));
+            case 2:
+                return new PhysicalBinaryPlan(this, Optional.of(groupExpression), logicalProperties,
+                        new GroupPlan(groupExpression.child(0)), new GroupPlan(groupExpression.child(1)));
+            default:
+                throw new RuntimeException("Unimplemented yet");
+        }
+    }
 }

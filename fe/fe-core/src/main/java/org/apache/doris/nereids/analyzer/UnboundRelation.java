@@ -20,7 +20,7 @@ package org.apache.doris.nereids.analyzer;
 import org.apache.doris.nereids.analyzer.identifier.TableIdentifier;
 import org.apache.doris.nereids.exceptions.UnboundException;
 import org.apache.doris.nereids.operators.OperatorType;
-import org.apache.doris.nereids.operators.plans.logical.LogicalLeafOperator;
+import org.apache.doris.nereids.operators.plans.logical.LogicalOperator;
 import org.apache.doris.nereids.properties.LogicalProperties;
 import org.apache.doris.nereids.properties.UnboundLogicalProperties;
 import org.apache.doris.nereids.trees.expressions.Expression;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * Represent a relation plan node that has not been bound.
  */
-public class UnboundRelation extends LogicalLeafOperator implements Unbound {
+public class UnboundRelation extends LogicalOperator implements Unbound {
     private final List<String> nameParts;
 
     public UnboundRelation(List<String> nameParts) {
@@ -73,7 +73,7 @@ public class UnboundRelation extends LogicalLeafOperator implements Unbound {
     }
 
     @Override
-    public List<Slot> computeOutput() {
+    public List<Slot> computeOutput(Plan ... inputs) {
         throw new UnboundException("output");
     }
 

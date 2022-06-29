@@ -32,7 +32,7 @@ import java.util.Objects;
 /**
  * Physical project plan operator.
  */
-public class PhysicalProject extends PhysicalUnaryOperator {
+public class PhysicalProject extends PhysicalOperator {
 
     private final List<NamedExpression> projects;
 

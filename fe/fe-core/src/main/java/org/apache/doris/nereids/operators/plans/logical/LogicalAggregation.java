@@ -39,7 +39,7 @@ import java.util.List;
  * Each agg node only contains the select statement field of the same layer,
  * and other agg nodes in the subquery contain.
  */
-public class LogicalAggregation extends LogicalUnaryOperator {
+public class LogicalAggregation extends LogicalOperator {
 
     private final List<Expression> groupByExpressions;
     private final List<? extends NamedExpression> outputExpressions;
@@ -79,7 +79,7 @@ public class LogicalAggregation extends LogicalUnaryOperator {
     }
 
     @Override
-    public List<Slot> computeOutput(Plan input) {
+    public List<Slot> computeOutput(Plan ... inputs) {
         return outputExpressions.stream()
                 .map(namedExpr -> {
                     try {
