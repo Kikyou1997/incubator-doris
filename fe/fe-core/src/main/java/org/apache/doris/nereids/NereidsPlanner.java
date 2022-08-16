@@ -24,6 +24,7 @@ import org.apache.doris.common.UserException;
 import org.apache.doris.nereids.glue.LogicalPlanAdapter;
 import org.apache.doris.nereids.glue.translator.PhysicalPlanTranslator;
 import org.apache.doris.nereids.glue.translator.PlanTranslatorContext;
+import org.apache.doris.nereids.jobs.batch.CleanUpJob;
 import org.apache.doris.nereids.jobs.batch.ColumnPruningJob;
 import org.apache.doris.nereids.jobs.batch.DisassembleRulesJob;
 import org.apache.doris.nereids.jobs.batch.JoinReorderRulesJob;
@@ -151,6 +152,7 @@ public class NereidsPlanner extends Planner {
         new PredicatePushDownRulesJob(cascadesContext).execute();
         new DisassembleRulesJob(cascadesContext).execute();
         new ColumnPruningJob(cascadesContext).execute();
+        new CleanUpJob(cascadesContext).execute();
     }
 
     private void deriveStats() {
