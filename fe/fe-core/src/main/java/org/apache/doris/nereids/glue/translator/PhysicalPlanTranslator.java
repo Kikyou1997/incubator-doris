@@ -27,6 +27,7 @@ import org.apache.doris.analysis.SortInfo;
 import org.apache.doris.analysis.TableName;
 import org.apache.doris.analysis.TableRef;
 import org.apache.doris.analysis.TupleDescriptor;
+import org.apache.doris.analysis.TupleId;
 import org.apache.doris.catalog.OlapTable;
 import org.apache.doris.catalog.Table;
 import org.apache.doris.nereids.exceptions.AnalysisException;
@@ -386,7 +387,20 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
             HashJoinNode hashJoinNode = new HashJoinNode(context.nextPlanNodeId(), leftFragmentPlanRoot,
                     rightFragmentPlanRoot, JoinType.toJoinOperator(joinType), execEqConjunctList, Lists.newArrayList(),
                     srcToOutput, outputDescriptor, outputDescriptor);
-
+            List<TupleId> tupleIdList = hashJoinNode.getPlanNodeTupleIds();
+            tupleIdList.clear();
+            TupleDescriptor leftOutputTupleDesc = leftFragmentPlanRoot.getOutputTupleDesc();
+            if (leftOutputTupleDesc != null) {
+                tupleIdList.add(leftOutputTupleDesc.getId());
+            } else {
+                tupleIdList.addAll(leftFragmentPlanRoot.getTupleIds());
+            }
+            TupleDescriptor rightOutputTupleDesc = rightFragmentPlanRoot.getOutputTupleDesc();
+            if (rightOutputTupleDesc != null) {
+                tupleIdList.add(rightOutputTupleDesc.getId());
+            } else {
+                tupleIdList.addAll(rightFragmentPlanRoot.getTupleIds());
+            }
             hashJoinNode.setDistributionMode(DistributionMode.BROADCAST);
             hashJoinNode.setChild(0, leftFragmentPlanRoot);
             connectChildFragment(hashJoinNode, 1, leftFragment, rightFragment, context);
