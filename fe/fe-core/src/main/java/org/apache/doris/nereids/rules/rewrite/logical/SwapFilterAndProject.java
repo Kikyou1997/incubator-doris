@@ -24,46 +24,35 @@ import org.apache.doris.nereids.trees.expressions.Alias;
 import org.apache.doris.nereids.trees.expressions.Expression;
 import org.apache.doris.nereids.trees.expressions.NamedExpression;
 import org.apache.doris.nereids.trees.expressions.Slot;
-import org.apache.doris.nereids.trees.expressions.visitor.UpdateAliasVisitor;
+import org.apache.doris.nereids.trees.expressions.visitor.RewriteAliasToChildExpr;
+import org.apache.doris.nereids.trees.plans.GroupPlan;
 import org.apache.doris.nereids.trees.plans.logical.LogicalFilter;
 import org.apache.doris.nereids.trees.plans.logical.LogicalPlan;
 import org.apache.doris.nereids.trees.plans.logical.LogicalProject;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Do collapse.
+ * Rewrite filter -> project to project -> filter.
  */
-public class CollapseFilterAndProject extends OneRewriteRuleFactory {
-
+public class SwapFilterAndProject extends OneRewriteRuleFactory {
     @Override
     public Rule build() {
-        return logicalProject(logicalFilter(logicalProject(any()))).thenApply(ctx -> {
-            LogicalProject topProject = ctx.root;
-            LogicalFilter filter = (LogicalFilter) topProject.child(0);
-            LogicalProject bottomProject = (LogicalProject) filter.child(0);
-            List<NamedExpression> namedExpressionList = bottomProject.getProjects();
+        return logicalFilter(logicalProject()).thenApply(ctx -> {
+            LogicalFilter<LogicalProject<GroupPlan>> filter = ctx.root;
+            LogicalProject<GroupPlan> project = filter.child();
+            List<NamedExpression> namedExpressionList = project.getProjects();
             Map<Slot, Alias> slotToAlias = new HashMap<>();
-            namedExpressionList
-                    .stream()
-                    .filter(Alias.class::isInstance)
-                    .forEach(s -> {
-                        slotToAlias.put(s.toSlot(), (Alias) s);
-                    });
-            UpdateAliasVisitor updateAliasVisitor = new UpdateAliasVisitor();
-            Expression rewrittenPredicate = updateAliasVisitor.visit(filter.getPredicates(), slotToAlias);
-            LogicalFilter rewrittenFilter =
-                    new LogicalFilter<LogicalPlan>(rewrittenPredicate, (LogicalPlan) bottomProject.child(0));
-            List<NamedExpression> projectList = topProject.getProjects();
-            List<NamedExpression> rewrittenProjectList = new ArrayList<>();
-            for (NamedExpression expression : projectList) {
-                rewrittenProjectList.add((NamedExpression) updateAliasVisitor.visit(expression, slotToAlias));
-            }
-            return new LogicalProject(rewrittenProjectList, rewrittenFilter);
-        }
-        ).toRule(RuleType.REWRITE_COLLAPSE_FILTER_PROJECT);
+            namedExpressionList.stream().filter(Alias.class::isInstance).forEach(s -> {
+                slotToAlias.put(s.toSlot(), (Alias) s);
+            });
+            RewriteAliasToChildExpr rewriteAliasToChildExpr = new RewriteAliasToChildExpr();
+            Expression rewrittenPredicate = rewriteAliasToChildExpr.visit(filter.getPredicates(), slotToAlias);
+            LogicalFilter<LogicalPlan> rewrittenFilter =
+                    new LogicalFilter<LogicalPlan>(rewrittenPredicate, project.child());
+            return new LogicalProject(project.getProjects(), rewrittenFilter);
+        }).toRule(RuleType.SWAP_FILTER_AND_PROJECT);
     }
 }
