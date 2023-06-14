@@ -17,10 +17,12 @@
 
 package org.apache.doris.nereids.properties;
 
+import org.apache.doris.nereids.CascadesContext;
 import org.apache.doris.nereids.PlanContext;
 import org.apache.doris.nereids.memo.GroupExpression;
 import org.apache.doris.nereids.properties.DistributionSpecHash.ShuffleType;
 import org.apache.doris.nereids.trees.expressions.Alias;
+import org.apache.doris.nereids.trees.expressions.CTEId;
 import org.apache.doris.nereids.trees.expressions.Cast;
 import org.apache.doris.nereids.trees.expressions.ExprId;
 import org.apache.doris.nereids.trees.expressions.Expression;
@@ -56,6 +58,7 @@ import org.apache.doris.nereids.util.JoinUtils;
 import org.apache.doris.qe.ConnectContext;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -63,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -77,8 +81,13 @@ public class ChildOutputPropertyDeriver extends PlanVisitor<PhysicalProperties, 
      */
     private final List<PhysicalProperties> childrenOutputProperties;
 
-    public ChildOutputPropertyDeriver(List<PhysicalProperties> childrenOutputProperties) {
+    private final Map<CTEId, PhysicalProperties> cteIdPhysicalPropertiesMap = Maps.newHashMap();
+
+    private final CascadesContext cascadesContext;
+
+    public ChildOutputPropertyDeriver(List<PhysicalProperties> childrenOutputProperties, CascadesContext context) {
         this.childrenOutputProperties = Objects.requireNonNull(childrenOutputProperties);
+        this.cascadesContext = context;
     }
 
     public PhysicalProperties getOutputProperties(GroupExpression groupExpression) {
@@ -101,6 +110,27 @@ public class ChildOutputPropertyDeriver extends PlanVisitor<PhysicalProperties, 
     public PhysicalProperties visitPhysicalCTEConsumer(
             PhysicalCTEConsumer cteConsumer, PlanContext context) {
         Preconditions.checkState(childrenOutputProperties.size() == 0);
+        CTEId cteId = cteConsumer.getCteId();
+        List<Slot> outputs = cteConsumer.getOutput();
+        Map<Slot, AtomicInteger> slotRefCountMap = cascadesContext.getSlotRefCountMap(cteId);
+        if (slotRefCountMap == null) {
+            return childrenOutputProperties.get(0);
+        }
+        int cteRefCount = cascadesContext.getCteIdToConsumers()
+                .get(cteId).size();
+        for (Slot consumerSlot : outputs) {
+            Slot producerSlot = cteConsumer.findProducerSlot(consumerSlot);
+            AtomicInteger slotRefCount = slotRefCountMap.get(producerSlot);
+            if (slotRefCount == null) {
+                continue;
+            }
+            if (slotRefCount.get() > cteRefCount / 2) {
+                PhysicalProperties physicalProperties =
+                        PhysicalProperties.createHash(ImmutableList.of(producerSlot.getExprId()), ShuffleType.BUCKETED);
+                cteIdPhysicalPropertiesMap.put(cteId, physicalProperties);
+                return physicalProperties;
+            }
+        }
         return PhysicalProperties.ANY;
     }
 
@@ -160,7 +190,7 @@ public class ChildOutputPropertyDeriver extends PlanVisitor<PhysicalProperties, 
 
     @Override
     public PhysicalProperties visitPhysicalPartitionTopN(PhysicalPartitionTopN<? extends Plan> partitionTopN,
-                                                         PlanContext context) {
+            PlanContext context) {
         Preconditions.checkState(childrenOutputProperties.size() == 1);
         PhysicalProperties childOutputProperty = childrenOutputProperties.get(0);
         return new PhysicalProperties(childOutputProperty.getDistributionSpec());
@@ -269,7 +299,7 @@ public class ChildOutputPropertyDeriver extends PlanVisitor<PhysicalProperties, 
         // TODO: find a better way to handle both tablet num == 1 and colocate table together in future
         if (!olapScan.getTable().isColocateTable() && olapScan.getScanTabletNum() == 1
                 && (!ConnectContext.get().getSessionVariable().enablePipelineEngine()
-                        || ConnectContext.get().getSessionVariable().getParallelExecInstanceNum() == 1)) {
+                || ConnectContext.get().getSessionVariable().getParallelExecInstanceNum() == 1)) {
             return PhysicalProperties.GATHER;
         } else if (olapScan.getDistributionSpec() instanceof DistributionSpecHash) {
             return PhysicalProperties.createHash((DistributionSpecHash) olapScan.getDistributionSpec());

@@ -238,7 +238,7 @@ public class CostAndEnforcerJob extends Job implements Cloneable {
         // Not need to do pruning here because it has been done when we get the
         // best expr from the child group
         ChildOutputPropertyDeriver childOutputPropertyDeriver
-                = new ChildOutputPropertyDeriver(outputChildrenProperties);
+                = new ChildOutputPropertyDeriver(outputChildrenProperties, context.getCascadesContext());
         // the physical properties the group expression support for its parent.
         PhysicalProperties outputProperty = childOutputPropertyDeriver.getOutputProperties(groupExpression);
 

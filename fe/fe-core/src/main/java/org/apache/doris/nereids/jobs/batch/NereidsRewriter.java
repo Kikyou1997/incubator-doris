@@ -44,6 +44,7 @@ import org.apache.doris.nereids.rules.rewrite.logical.CheckDataTypes;
 import org.apache.doris.nereids.rules.rewrite.logical.ColumnPruning;
 import org.apache.doris.nereids.rules.rewrite.logical.ConvertInnerOrCrossJoin;
 import org.apache.doris.nereids.rules.rewrite.logical.CountDistinctRewrite;
+import org.apache.doris.nereids.rules.rewrite.logical.CounterOfCTEProducerSlotReferencedInJoinCondition;
 import org.apache.doris.nereids.rules.rewrite.logical.EliminateAggregate;
 import org.apache.doris.nereids.rules.rewrite.logical.EliminateDedupJoinCondition;
 import org.apache.doris.nereids.rules.rewrite.logical.EliminateFilter;
@@ -299,11 +300,15 @@ public class NereidsRewriter extends BatchRewriteJob {
                     new CheckAfterRewrite()
             )),
 
-            topic("MATERIALIZED CTE", topDown(
+            topic("Materialize CTE", topDown(
                             new CollectFilterAboveConsumer(),
                             new CollectProjectAboveConsumer(),
                             new BuildCTEAnchorAndCTEProducer()),
-                    topDown(new CTEProducerRewrite()))
+                    topDown(new CTEProducerRewrite())),
+
+            topic("CTE Shuffle", custom(RuleType.COUNTER_OF_CTE_PRODUCER_SLOT_REFERENCED_IN_JOIN_CONDITION,
+                    CounterOfCTEProducerSlotReferencedInJoinCondition::new))
+
     );
 
     public NereidsRewriter(CascadesContext cascadesContext) {

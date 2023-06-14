@@ -29,9 +29,9 @@ public class SimpleJobScheduler implements JobScheduler {
         JobPool pool = scheduleContext.getJobPool();
         while (!pool.isEmpty()) {
             CascadesContext context = (CascadesContext) scheduleContext;
-            if (context.isTimeout()) {
-                throw new RuntimeException("Nereids cost too much time ( > 5s )");
-            }
+//            if (context.isTimeout()) {
+//                throw new RuntimeException("Nereids cost too much time ( > 5s )");
+//            }
             Job job = pool.pop();
             job.execute();
         }

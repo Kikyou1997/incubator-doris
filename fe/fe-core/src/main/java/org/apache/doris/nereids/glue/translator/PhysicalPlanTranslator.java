@@ -52,6 +52,7 @@ import org.apache.doris.common.Pair;
 import org.apache.doris.common.UserException;
 import org.apache.doris.common.util.Util;
 import org.apache.doris.nereids.exceptions.AnalysisException;
+import org.apache.doris.nereids.properties.DistributionSpec;
 import org.apache.doris.nereids.properties.DistributionSpecAny;
 import org.apache.doris.nereids.properties.DistributionSpecGather;
 import org.apache.doris.nereids.properties.DistributionSpecHash;
@@ -684,8 +685,8 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         SchemaScanNode scanNode = new SchemaScanNode(context.nextPlanNodeId(), tupleDescriptor);
         context.getRuntimeTranslator().ifPresent(
                 runtimeFilterGenerator -> runtimeFilterGenerator.getTargetOnScanNode(schemaScan.getId()).forEach(
-                    expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, scanNode, context)
-            )
+                        expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, scanNode, context)
+                )
         );
         scanNode.finalizeForNereids();
         context.getScanNodes().add(scanNode);
@@ -724,8 +725,8 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         }
         Preconditions.checkNotNull(scanNode);
         fileScan.getConjuncts().stream()
-            .map(e -> ExpressionTranslator.translate(e, context))
-            .forEach(scanNode::addConjunct);
+                .map(e -> ExpressionTranslator.translate(e, context))
+                .forEach(scanNode::addConjunct);
         TableName tableName = new TableName(null, "", "");
         TableRef ref = new TableRef(tableName, null, null);
         BaseTableRef tableRef = new BaseTableRef(ref, table, tableName);
@@ -736,8 +737,8 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         ScanNode finalScanNode = scanNode;
         context.getRuntimeTranslator().ifPresent(
                 runtimeFilterGenerator -> runtimeFilterGenerator.getTargetOnScanNode(fileScan.getId()).forEach(
-                    expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, finalScanNode, context)
-            )
+                        expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, finalScanNode, context)
+                )
         );
         Utils.execWithUncheckedException(scanNode::finalizeForNereids);
         // Create PlanFragment
@@ -757,8 +758,8 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         ScanNode scanNode = catalogFunction.getScanNode(context.nextPlanNodeId(), tupleDescriptor);
         context.getRuntimeTranslator().ifPresent(
                 runtimeFilterGenerator -> runtimeFilterGenerator.getTargetOnScanNode(tvfRelation.getId()).forEach(
-                    expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, scanNode, context)
-            )
+                        expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, scanNode, context)
+                )
         );
         Utils.execWithUncheckedException(scanNode::finalizeForNereids);
         context.addScanNode(scanNode);
@@ -786,8 +787,8 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         context.addScanNode(jdbcScanNode);
         context.getRuntimeTranslator().ifPresent(
                 runtimeFilterGenerator -> runtimeFilterGenerator.getTargetOnScanNode(jdbcScan.getId()).forEach(
-                    expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, jdbcScanNode, context)
-            )
+                        expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, jdbcScanNode, context)
+                )
         );
         Utils.execWithUncheckedException(jdbcScanNode::finalizeForNereids);
         DataPartition dataPartition = DataPartition.RANDOM;
@@ -808,8 +809,8 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         context.addScanNode(esScanNode);
         context.getRuntimeTranslator().ifPresent(
                 runtimeFilterGenerator -> runtimeFilterGenerator.getTargetOnScanNode(esScan.getId()).forEach(
-                    expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, esScanNode, context)
-            )
+                        expr -> runtimeFilterGenerator.translateRuntimeFilterTarget(expr, esScanNode, context)
+                )
         );
         Utils.execWithUncheckedException(esScanNode::finalizeForNereids);
         DataPartition dataPartition = DataPartition.RANDOM;
@@ -885,7 +886,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
 
     @Override
     public PlanFragment visitPhysicalWindow(PhysicalWindow<? extends Plan> physicalWindow,
-                                            PlanTranslatorContext context) {
+            PlanTranslatorContext context) {
         PlanFragment inputPlanFragment = physicalWindow.child(0).accept(this, context);
 
         // 1. translate to old optimizer variable
@@ -984,7 +985,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
 
     @Override
     public PlanFragment visitPhysicalPartitionTopN(PhysicalPartitionTopN<? extends Plan> partitionTopN,
-                                                   PlanTranslatorContext context) {
+            PlanTranslatorContext context) {
         PlanFragment inputFragment = partitionTopN.child(0).accept(this, context);
 
         Preconditions.checkArgument(!(partitionTopN.child(0) instanceof ExchangeNode));
@@ -996,7 +997,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
     }
 
     private PartitionSortNode translatePartitionSortNode(PhysicalPartitionTopN<? extends Plan> partitionTopN,
-                                                         PlanNode childNode, PlanTranslatorContext context) {
+            PlanNode childNode, PlanTranslatorContext context) {
         // Generate the SortInfo, similar to 'translateSortNode'.
         List<Expr> oldOrderingExprList = Lists.newArrayList();
         List<Boolean> ascOrderList = Lists.newArrayList();
@@ -1131,45 +1132,44 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
     /**
      * the contract of hash join node with BE
      * 1. hash join contains 3 types of predicates:
-     *   a. equal join conjuncts
-     *   b. other join conjuncts
-     *   c. other predicates (denoted by filter conjuncts in the rest of comments)
-     *
+     * a. equal join conjuncts
+     * b. other join conjuncts
+     * c. other predicates (denoted by filter conjuncts in the rest of comments)
+     * <p>
      * 2. hash join contains 3 tuple descriptors
-     *   a. input tuple descriptors, corresponding to the left child output and right child output.
-     *      If its column is selected, it will be displayed in explain by `tuple ids`.
-     *      for example, select L.* from L join R on ..., because no column from R are selected, tuple ids only
-     *      contains output tuple of L.
-     *      equal join conjuncts is bound on input tuple descriptors.
-     *
-     *   b.intermediate tuple.
-     *      This tuple describes schema of the output block after evaluating equal join conjuncts
-     *      and other join conjuncts.
-     *
-     *      Other join conjuncts currently is bound on intermediate tuple. There are some historical reason, and it
-     *      should be bound on input tuple in the future.
-     *
-     *      filter conjuncts will be evaluated on the intermediate tuple. That means the input block of filter is
-     *      described by intermediate tuple, and hence filter conjuncts should be bound on intermediate tuple.
-     *
-     *      In order to be compatible with old version, intermediate tuple is not pruned. For example, intermediate
-     *      tuple contains all slots from both sides of children. After probing hash-table, BE does not need to
-     *      materialize all slots in intermediate tuple. The slots in HashJoinNode.hashOutputSlotIds will be
-     *      materialized by BE. If `hashOutputSlotIds` is empty, all slots will be materialized.
-     *
-     *      In case of outer join, the slots in intermediate should be set nullable.
-     *      For example,
-     *      select L.*, R.* from L left outer join R on ...
-     *      All slots from R in intermediate tuple should be nullable.
-     *
-     *   c. output tuple
-     *      This describes the schema of hash join output block.
+     * a. input tuple descriptors, corresponding to the left child output and right child output.
+     * If its column is selected, it will be displayed in explain by `tuple ids`.
+     * for example, select L.* from L join R on ..., because no column from R are selected, tuple ids only
+     * contains output tuple of L.
+     * equal join conjuncts is bound on input tuple descriptors.
+     * <p>
+     * b.intermediate tuple.
+     * This tuple describes schema of the output block after evaluating equal join conjuncts
+     * and other join conjuncts.
+     * <p>
+     * Other join conjuncts currently is bound on intermediate tuple. There are some historical reason, and it
+     * should be bound on input tuple in the future.
+     * <p>
+     * filter conjuncts will be evaluated on the intermediate tuple. That means the input block of filter is
+     * described by intermediate tuple, and hence filter conjuncts should be bound on intermediate tuple.
+     * <p>
+     * In order to be compatible with old version, intermediate tuple is not pruned. For example, intermediate
+     * tuple contains all slots from both sides of children. After probing hash-table, BE does not need to
+     * materialize all slots in intermediate tuple. The slots in HashJoinNode.hashOutputSlotIds will be
+     * materialized by BE. If `hashOutputSlotIds` is empty, all slots will be materialized.
+     * <p>
+     * In case of outer join, the slots in intermediate should be set nullable.
+     * For example,
+     * select L.*, R.* from L left outer join R on ...
+     * All slots from R in intermediate tuple should be nullable.
+     * <p>
+     * c. output tuple
+     * This describes the schema of hash join output block.
      * 3. Intermediate tuple
-     *      for BE performance reason, the slots in intermediate tuple depends on the join type and other join conjucts.
-     *      In general, intermediate tuple contains all slots of both children, except one case.
-     *      For left-semi/left-ant (right-semi/right-semi) join without other join conjuncts, intermediate tuple
-     *      only contains left (right) children output slots.
-     *
+     * for BE performance reason, the slots in intermediate tuple depends on the join type and other join conjucts.
+     * In general, intermediate tuple contains all slots of both children, except one case.
+     * For left-semi/left-ant (right-semi/right-semi) join without other join conjuncts, intermediate tuple
+     * only contains left (right) children output slots.
      */
     // TODO: 1. support shuffle join / co-locate / bucket shuffle join later
     @Override
@@ -1820,12 +1820,12 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
      * returned fragment and how the data of the child fragments is consumed depends on the
      * data partitions of the child fragments:
      * - All child fragments are unpartitioned or partitioned: The returned fragment has an
-     *   UNPARTITIONED or RANDOM data partition, respectively. The UnionNode absorbs the
-     *   plan trees of all child fragments.
+     * UNPARTITIONED or RANDOM data partition, respectively. The UnionNode absorbs the
+     * plan trees of all child fragments.
      * - Mixed partitioned/unpartitioned child fragments: The returned fragment is
-     *   RANDOM partitioned. The plan trees of all partitioned child fragments are absorbed
-     *   into the UnionNode. All unpartitioned child fragments are connected to the
-     *   UnionNode via a RANDOM exchange, and remain unchanged otherwise.
+     * RANDOM partitioned. The plan trees of all partitioned child fragments are absorbed
+     * into the UnionNode. All unpartitioned child fragments are connected to the
+     * UnionNode via a RANDOM exchange, and remain unchanged otherwise.
      */
     @Override
     public PlanFragment visitPhysicalSetOperation(
@@ -1942,7 +1942,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
 
     @Override
     public PlanFragment visitPhysicalCTEConsumer(PhysicalCTEConsumer cteConsumer,
-                                                PlanTranslatorContext context) {
+            PlanTranslatorContext context) {
         CTEId cteId = cteConsumer.getCteId();
 
         MultiCastPlanFragment multCastFragment = (MultiCastPlanFragment) context.getCteProduceFragments().get(cteId);
@@ -1958,7 +1958,21 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         ExchangeNode exchangeNode = new ExchangeNode(context.nextPlanNodeId(), multCastFragment.getPlanRoot());
 
         DataStreamSink streamSink = new DataStreamSink(exchangeNode.getId());
-        streamSink.setPartition(DataPartition.RANDOM);
+        DataPartition dataPartition = DataPartition.RANDOM;
+
+        DistributionSpec spec = context.getCascadesContext().findDistributionSpecForCTEConsumer(
+                cteConsumer.getConsumerId());
+        if (spec != null) {
+            if (spec instanceof DistributionSpecGather) {
+                dataPartition = DataPartition.UNPARTITIONED;
+            } else if (spec instanceof DistributionSpecHash) {
+                dataPartition = hashSpecToDataPartition((DistributionSpecHash) spec, context);
+            } else if (spec instanceof DistributionSpecReplicated) {
+                dataPartition = DataPartition.UNPARTITIONED;
+            }
+        }
+
+        streamSink.setPartition(dataPartition);
         streamSink.setFragment(multCastFragment);
 
         multiCastDataSink.getDataStreamSinks().add(streamSink);
@@ -2007,7 +2021,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
         inputPlanNode.setOutputTupleDesc(tupleDescriptor);
 
         // update data partition
-        DataPartition dataPartition = new DataPartition(TPartitionType.HASH_PARTITIONED, execExprList);
+        // dataPartition = new DataPartition(TPartitionType.HASH_PARTITIONED, execExprList);
         consumeFragment.setDataPartition(dataPartition);
 
         SelectNode projectNode = new SelectNode(context.nextPlanNodeId(), inputPlanNode);
@@ -2022,7 +2036,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
 
     @Override
     public PlanFragment visitPhysicalCTEProducer(PhysicalCTEProducer<? extends Plan> cteProducer,
-                                                PlanTranslatorContext context) {
+            PlanTranslatorContext context) {
         PlanFragment child = cteProducer.child().accept(this, context);
         CTEId cteId = cteProducer.getCteId();
         context.getPlanFragments().remove(child);
@@ -2046,7 +2060,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
      */
     @Override
     public PlanFragment visitPhysicalCTEAnchor(PhysicalCTEAnchor<? extends Plan, ? extends Plan> cteAnchor,
-                                               PlanTranslatorContext context) {
+            PlanTranslatorContext context) {
         cteAnchor.child(0).accept(this, context);
         return cteAnchor.child(1).accept(this, context);
     }
@@ -2427,7 +2441,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
     }
 
     private Map<ExprId, SlotRef> getBufferedSlotRefForWindow(WindowFrameGroup windowFrameGroup,
-                                                             PlanTranslatorContext context) {
+            PlanTranslatorContext context) {
         Map<ExprId, SlotRef> bufferedSlotRefForWindow = context.getBufferedSlotRefForWindow();
 
         // set if absent
@@ -2448,7 +2462,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
     }
 
     private Expr windowExprsHaveMatchedNullable(List<Expression> expressions, List<Expr> exprs,
-                                                Map<ExprId, SlotRef> bufferedSlotRef) {
+            Map<ExprId, SlotRef> bufferedSlotRef) {
         Map<ExprId, Expr> exprIdToExpr = Maps.newHashMap();
         for (int i = 0; i < expressions.size(); i++) {
             NamedExpression expression = (NamedExpression) expressions.get(i);
@@ -2458,7 +2472,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
     }
 
     private Expr windowExprsHaveMatchedNullable(Map<ExprId, Expr> exprIdToExpr, Map<ExprId, SlotRef> exprIdToSlotRef,
-                                                List<Expression> expressions, int i, int size) {
+            List<Expression> expressions, int i, int size) {
         if (i > size - 1) {
             return new BoolLiteral(true);
         }
@@ -2482,7 +2496,10 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
 
     private DataPartition hashSpecToDataPartition(PhysicalDistribute distribute, PlanTranslatorContext context) {
         Preconditions.checkState(distribute.getDistributionSpec() instanceof DistributionSpecHash);
-        DistributionSpecHash hashSpec = (DistributionSpecHash) distribute.getDistributionSpec();
+        return hashSpecToDataPartition((DistributionSpecHash) distribute.getDistributionSpec(), context);
+    }
+
+    private DataPartition hashSpecToDataPartition(DistributionSpecHash hashSpec, PlanTranslatorContext context) {
         List<Expr> partitions = hashSpec.getOrderedShuffledColumns().stream()
                 .map(exprId -> context.findSlotRef(exprId))
                 .collect(Collectors.toList());
