@@ -1132,44 +1132,45 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
     /**
      * the contract of hash join node with BE
      * 1. hash join contains 3 types of predicates:
-     * a. equal join conjuncts
-     * b. other join conjuncts
-     * c. other predicates (denoted by filter conjuncts in the rest of comments)
-     * <p>
+     *   a. equal join conjuncts
+     *   b. other join conjuncts
+     *   c. other predicates (denoted by filter conjuncts in the rest of comments)
+     *
      * 2. hash join contains 3 tuple descriptors
-     * a. input tuple descriptors, corresponding to the left child output and right child output.
-     * If its column is selected, it will be displayed in explain by `tuple ids`.
-     * for example, select L.* from L join R on ..., because no column from R are selected, tuple ids only
-     * contains output tuple of L.
-     * equal join conjuncts is bound on input tuple descriptors.
-     * <p>
-     * b.intermediate tuple.
-     * This tuple describes schema of the output block after evaluating equal join conjuncts
-     * and other join conjuncts.
-     * <p>
-     * Other join conjuncts currently is bound on intermediate tuple. There are some historical reason, and it
-     * should be bound on input tuple in the future.
-     * <p>
-     * filter conjuncts will be evaluated on the intermediate tuple. That means the input block of filter is
-     * described by intermediate tuple, and hence filter conjuncts should be bound on intermediate tuple.
-     * <p>
-     * In order to be compatible with old version, intermediate tuple is not pruned. For example, intermediate
-     * tuple contains all slots from both sides of children. After probing hash-table, BE does not need to
-     * materialize all slots in intermediate tuple. The slots in HashJoinNode.hashOutputSlotIds will be
-     * materialized by BE. If `hashOutputSlotIds` is empty, all slots will be materialized.
-     * <p>
-     * In case of outer join, the slots in intermediate should be set nullable.
-     * For example,
-     * select L.*, R.* from L left outer join R on ...
-     * All slots from R in intermediate tuple should be nullable.
-     * <p>
-     * c. output tuple
-     * This describes the schema of hash join output block.
+     *   a. input tuple descriptors, corresponding to the left child output and right child output.
+     *      If its column is selected, it will be displayed in explain by `tuple ids`.
+     *      for example, select L.* from L join R on ..., because no column from R are selected, tuple ids only
+     *      contains output tuple of L.
+     *      equal join conjuncts is bound on input tuple descriptors.
+     *
+     *   b.intermediate tuple.
+     *      This tuple describes schema of the output block after evaluating equal join conjuncts
+     *      and other join conjuncts.
+     *
+     *      Other join conjuncts currently is bound on intermediate tuple. There are some historical reason, and it
+     *      should be bound on input tuple in the future.
+     *
+     *      filter conjuncts will be evaluated on the intermediate tuple. That means the input block of filter is
+     *      described by intermediate tuple, and hence filter conjuncts should be bound on intermediate tuple.
+     *
+     *      In order to be compatible with old version, intermediate tuple is not pruned. For example, intermediate
+     *      tuple contains all slots from both sides of children. After probing hash-table, BE does not need to
+     *      materialize all slots in intermediate tuple. The slots in HashJoinNode.hashOutputSlotIds will be
+     *      materialized by BE. If `hashOutputSlotIds` is empty, all slots will be materialized.
+     *
+     *      In case of outer join, the slots in intermediate should be set nullable.
+     *      For example,
+     *      select L.*, R.* from L left outer join R on ...
+     *      All slots from R in intermediate tuple should be nullable.
+     *
+     *   c. output tuple
+     *      This describes the schema of hash join output block.
      * 3. Intermediate tuple
-     * for BE performance reason, the slots in intermediate tuple depends on the join type and other join conjucts.
-     * In general, intermediate tuple contains all slots of both children, except one case.
-     * For left-semi/left-ant (right-semi/right-semi) join without other join conjuncts, intermediate tuple
-     * only contains left (right) children output slots.
+     *      for BE performance reason, the slots in intermediate tuple depends on the join type and other join conjucts.
+     *      In general, intermediate tuple contains all slots of both children, except one case.
+     *      For left-semi/left-ant (right-semi/right-semi) join without other join conjuncts, intermediate tuple
+     *      only contains left (right) children output slots.
+     *
      */
     // TODO: 1. support shuffle join / co-locate / bucket shuffle join later
     @Override
@@ -1820,12 +1821,12 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
      * returned fragment and how the data of the child fragments is consumed depends on the
      * data partitions of the child fragments:
      * - All child fragments are unpartitioned or partitioned: The returned fragment has an
-     * UNPARTITIONED or RANDOM data partition, respectively. The UnionNode absorbs the
-     * plan trees of all child fragments.
+     *   UNPARTITIONED or RANDOM data partition, respectively. The UnionNode absorbs the
+     *   plan trees of all child fragments.
      * - Mixed partitioned/unpartitioned child fragments: The returned fragment is
-     * RANDOM partitioned. The plan trees of all partitioned child fragments are absorbed
-     * into the UnionNode. All unpartitioned child fragments are connected to the
-     * UnionNode via a RANDOM exchange, and remain unchanged otherwise.
+     *   RANDOM partitioned. The plan trees of all partitioned child fragments are absorbed
+     *   into the UnionNode. All unpartitioned child fragments are connected to the
+     *   UnionNode via a RANDOM exchange, and remain unchanged otherwise.
      */
     @Override
     public PlanFragment visitPhysicalSetOperation(
@@ -2501,7 +2502,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
 
     private DataPartition hashSpecToDataPartition(DistributionSpecHash hashSpec, PlanTranslatorContext context) {
         List<Expr> partitions = hashSpec.getOrderedShuffledColumns().stream()
-                .map(exprId -> context.findSlotRef(exprId))
+                .map(context::findSlotRef)
                 .collect(Collectors.toList());
         return new DataPartition(TPartitionType.HASH_PARTITIONED, partitions);
     }
