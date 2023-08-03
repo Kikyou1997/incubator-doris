@@ -2033,7 +2033,7 @@ public class Config extends ConfigBase {
     public static String full_auto_analyze_start_time = "00:00:00";
 
     @ConfField
-    public static String full_auto_analyze_end_time = "02:00:00";
+    public static String full_auto_analyze_end_time = "23:59:59";
 
     @ConfField
     public static int statistics_sql_parallel_exec_instance_num = 1;
