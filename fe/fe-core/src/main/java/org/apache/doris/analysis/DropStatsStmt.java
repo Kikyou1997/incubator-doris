@@ -50,6 +50,8 @@ public class DropStatsStmt extends DdlStmt {
 
     public final boolean dropExpired;
 
+    public final boolean dropAll;
+
     private final TableName tableName;
     private Set<String> columnNames;
     // Flag to drop external table row count in table_statistics.
@@ -57,11 +59,16 @@ public class DropStatsStmt extends DdlStmt {
 
     private long tblId;
 
+    public DropStatsStmt() {
+        this(false);
+    }
+
     public DropStatsStmt(boolean dropExpired) {
         this.dropExpired = dropExpired;
         this.tableName = null;
         this.columnNames = null;
         this.dropTableRowCount = false;
+        this.dropAll = false;
     }
 
     public DropStatsStmt(TableName tableName,
@@ -76,6 +83,17 @@ public class DropStatsStmt extends DdlStmt {
             dropTableRowCount = true;
         }
         dropExpired = false;
+        this.dropAll = false;
+    }
+
+    public DropStatsStmt(boolean dropExpired, boolean dropAll, TableName tableName, Set<String> columnNames,
+            boolean dropTableRowCount, long tblId) {
+        this.dropExpired = dropExpired;
+        this.dropAll = dropAll;
+        this.tableName = tableName;
+        this.columnNames = columnNames;
+        this.dropTableRowCount = dropTableRowCount;
+        this.tblId = tblId;
     }
 
     @Override

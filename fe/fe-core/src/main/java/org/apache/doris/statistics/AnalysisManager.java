@@ -681,6 +681,11 @@ public class AnalysisManager extends Daemon implements Writable {
     }
 
     public void dropStats(DropStatsStmt dropStatsStmt) throws DdlException {
+        if (dropStatsStmt.dropAll) {
+            for (Long id : idToTblStatsStatus.keySet()) {
+
+            }
+        }
         if (dropStatsStmt.dropExpired) {
             Env.getCurrentEnv().getStatisticsCleaner().clear();
             return;
@@ -853,7 +858,7 @@ public class AnalysisManager extends Daemon implements Writable {
         return null;
     }
 
-    public void removeAll(List<AnalysisInfo> analysisInfos) {
+    public void removeAllAnalysisTasks(List<AnalysisInfo> analysisInfos) {
         for (AnalysisInfo analysisInfo : analysisInfos) {
             analysisTaskInfoMap.remove(analysisInfo.taskId);
         }
@@ -869,7 +874,7 @@ public class AnalysisManager extends Daemon implements Writable {
         AnalyzeDeletionLog analyzeDeletionLog = new AnalyzeDeletionLog(jobId);
         Env.getCurrentEnv().getEditLog().logDeleteAnalysisJob(analyzeDeletionLog);
         replayDeleteAnalysisJob(analyzeDeletionLog);
-        removeAll(findTasks(jobId));
+        removeAllAnalysisTasks(findTasks(jobId));
     }
 
     public static AnalysisManager readFields(DataInput in) throws IOException {

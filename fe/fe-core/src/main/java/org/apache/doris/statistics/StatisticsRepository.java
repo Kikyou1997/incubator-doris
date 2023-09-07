@@ -188,6 +188,22 @@ public class StatisticsRepository {
         dropStatisticsByColName(tblId, colNames, StatisticConstants.HISTOGRAM_TBL_NAME);
     }
 
+    public static void clearAllColStats() throws DdlException {
+        clearAllColStats(StatisticConstants.STATISTIC_TBL_NAME);
+        clearAllColStats(StatisticConstants.HISTOGRAM_TBL_NAME);
+    }
+
+    public static void clearAllColStats(String tblName) throws DdlException {
+        Map<String, String> params = new HashMap<>();
+        params.put("tblName", tblName);
+        params.put("condition", "tbl_id > 0");
+        try {
+            StatisticsUtil.execUpdate(new StringSubstitutor(params).replace(DROP_TABLE_STATISTICS_TEMPLATE));
+        } catch (Exception e) {
+            throw new DdlException(e.getMessage(), e);
+        }
+    }
+
     public static void dropStatisticsByColName(long tblId, Set<String> colNames, String statsTblName)
             throws DdlException {
         Map<String, String> params = new HashMap<>();

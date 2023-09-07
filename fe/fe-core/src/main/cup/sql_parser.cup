@@ -3160,6 +3160,10 @@ drop_stmt ::=
     {:
         RESULT = new DropAnalyzeJobStmt(job_id);
     :}
+    | KW_DROP KW_STATS STAR
+    {:
+        RESULT = new DropStatsStmt(false, true, null, null, false, false);
+    :}
     ;
 
 // Recover statement
