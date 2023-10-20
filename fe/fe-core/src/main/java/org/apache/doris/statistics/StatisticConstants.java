@@ -66,6 +66,8 @@ public class StatisticConstants {
 
     public static int ANALYZE_TASK_RETRY_TIMES = 5;
 
+    public static int UNION_ALL_LIMIT = 512;
+
     public static final String DB_NAME = SystemInfoService.DEFAULT_CLUSTER + ":" + FeConstants.INTERNAL_DB_NAME;
 
     public static final String FULL_QUALIFIED_STATS_TBL_NAME = FeConstants.INTERNAL_DB_NAME + "." + STATISTIC_TBL_NAME;
@@ -77,9 +79,6 @@ public class StatisticConstants {
     public static final int RETRY_LOAD_THREAD_POOL_SIZE = 1;
 
     public static final int LOAD_RETRY_TIMES = 3;
-
-    // union more relation than 512 may cause StackOverFlowException in the future.
-    public static final int UNION_ALL_LIMIT = 512;
 
     public static final String FULL_AUTO_ANALYZE_START_TIME = "00:00:00";
     public static final String FULL_AUTO_ANALYZE_END_TIME = "23:59:59";

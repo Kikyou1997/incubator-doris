@@ -2259,4 +2259,21 @@ public class Config extends ConfigBase {
     })
     public static boolean ignore_unknown_metadata_module = false;
 
+    @ConfField
+    public static boolean stats_enable_sql_profile = true;
+
+    @ConfField
+    public static boolean stats_enable_scan_run_serial = true;
+
+    @ConfField
+    public static boolean stats_enable_file_cache = false;
+
+    @ConfField
+    public static boolean stats_enable_page_cache = false;
+
+    @ConfField
+    public static int stats_union_all_limit = 2048;
+
+    @ConfField
+    public static boolean ignore_part_ndv = false;
 }

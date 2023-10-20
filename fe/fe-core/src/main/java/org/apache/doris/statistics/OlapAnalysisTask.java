@@ -20,6 +20,7 @@ package org.apache.doris.statistics;
 import org.apache.doris.catalog.MaterializedIndex;
 import org.apache.doris.catalog.OlapTable;
 import org.apache.doris.catalog.Partition;
+import org.apache.doris.common.Config;
 import org.apache.doris.common.FeConstants;
 import org.apache.doris.common.Pair;
 import org.apache.doris.datasource.InternalCatalog;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
 /**
  * Each task analyze one column.
  */
+// CHECKSTYLE OFF
 public class OlapAnalysisTask extends BaseAnalysisTask {
 
     // TODO Currently, NDV is computed for the full table; in fact,
@@ -56,7 +58,7 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
             + "     (SELECT NDV(`${colName}`) AS ndv "
             + "     FROM `${dbName}`.`${tblName}`) t2";
 
-    private static final String COLLECT_PARTITION_STATS_SQL_TEMPLATE =
+    private final String COLLECT_PARTITION_STATS_SQL_TEMPLATE =
             " SELECT "
                     + "CONCAT(${tblId}, '-', ${idxId}, '-', '${colId}', '-', ${partId}) AS id, "
                     + "${catalogId} AS catalog_id, "
@@ -65,8 +67,8 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
                     + "${idxId} AS idx_id, "
                     + "'${colId}' AS col_id, "
                     + "${partId} AS part_id, "
-                    + "COUNT(1) AS row_count, "
-                    + "NDV(`${colName}`) AS ndv, "
+                    + getNDV()
+                    + "COUNT(1) AS ndv, "
                     + "SUM(CASE WHEN `${colName}` IS NULL THEN 1 ELSE 0 END) AS null_count, "
                     + "MIN(`${colName}`) AS min, "
                     + "MAX(`${colName}`) AS max, "
@@ -109,6 +111,10 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
         } else {
             doFull();
         }
+    }
+
+    private String getNDV() {
+        return Config.ignore_part_ndv ? "COUNT(1) AS row_count, " : "NDV(`${colName}`) AS ndv,";
     }
 
     /**
@@ -236,7 +242,7 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
         long startTime = System.currentTimeMillis();
         LOG.debug("analyze task {} start at {}", info.toString(), new Date());
         try (AutoCloseConnectContext r = StatisticsUtil.buildConnectContext(info.jobType.equals(JobType.SYSTEM))) {
-            List<List<String>> sqlGroups = Lists.partition(partitionAnalysisSQLs, StatisticConstants.UNION_ALL_LIMIT);
+            List<List<String>> sqlGroups = Lists.partition(partitionAnalysisSQLs, Config.stats_union_all_limit);
             for (List<String> group : sqlGroups) {
                 if (killed) {
                     return;
