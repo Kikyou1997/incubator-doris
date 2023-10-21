@@ -25,6 +25,7 @@ import org.apache.doris.catalog.TableIf;
 import org.apache.doris.common.Config;
 import org.apache.doris.datasource.CatalogIf;
 import org.apache.doris.qe.AuditLogHelper;
+import org.apache.doris.qe.MyFileUtil;
 import org.apache.doris.qe.QueryState;
 import org.apache.doris.qe.QueryState.MysqlStateType;
 import org.apache.doris.qe.StmtExecutor;
@@ -286,6 +287,7 @@ public abstract class BaseAnalysisTask {
         if (killed) {
             return;
         }
+        MyFileUtil.appendSQL(stmtExecutor.getOriginStmt().originStmt);
         LOG.debug("execute internal sql: {}", stmtExecutor.getOriginStmt());
         try {
             stmtExecutor.execute();

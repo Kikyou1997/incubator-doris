@@ -2276,4 +2276,10 @@ public class Config extends ConfigBase {
 
     @ConfField
     public static boolean ignore_part_ndv = false;
+
+    @ConfField
+    public static boolean log_analyze_sql = true;
+
+    @ConfField
+    public static String path = "/root/doris_stats_sql";
 }
