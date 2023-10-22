@@ -2282,4 +2282,7 @@ public class Config extends ConfigBase {
 
     @ConfField
     public static String path = "/root/doris_stats_sql";
+
+    @ConfField
+    public static boolean enable_serial_scan = false;
 }

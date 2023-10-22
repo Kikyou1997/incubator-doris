@@ -31,7 +31,7 @@ public class MyFileUtil {
 
     public static final Logger LOG = LogManager.getLogger(MyFileUtil.class);
 
-    public static void appendSQL(String sql) {
+    public static synchronized void appendSQL(String sql) {
         if (Config.log_analyze_sql) {
             return;
         }

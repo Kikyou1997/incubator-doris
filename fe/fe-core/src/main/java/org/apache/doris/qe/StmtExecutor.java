@@ -2591,7 +2591,7 @@ public class StmtExecutor {
 
     public List<ResultRow> executeInternalQuery() {
         LOG.debug("INTERNAL QUERY: " + originStmt.toString());
-        MyFileUtil.appendSQL(originStmt.toString());
+        MyFileUtil.appendSQL(originStmt.originStmt);
         UUID uuid = UUID.randomUUID();
         TUniqueId queryId = new TUniqueId(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits());
         context.setQueryId(queryId);
