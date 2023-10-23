@@ -90,8 +90,9 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
             + "NULL AS max, "
             + "${dataSizeFunction} * ${scaleFactor} AS data_size, "
             + "NOW() "
-            + "FROM `${dbName}`.`${tblName}`"
-            + "${tablets}";
+            + "FROM "
+            + " (SELECT ${colName} FROM `${dbName}`.`${tblName}` "
+            + "${tablets} ${limit}) t";
 
     // cache stats for each partition, it would be inserted into column_statistics in a batch.
     private final List<List<ColStatsData>> buf = new ArrayList<>();
@@ -148,6 +149,7 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
             params.put("tblName", tbl.getName());
             params.put("scaleFactor", String.valueOf(scaleFactor));
             params.put("tablets", tabletStr.isEmpty() ? "" : String.format("TABLET(%s)", tabletStr));
+            params.put("limit", tableSample.isPercent() ? "" : "LIMIT " + tableSample.getSampleValue());
             StringSubstitutor stringSubstitutor = new StringSubstitutor(params);
             stmtExecutor = new StmtExecutor(r.connectContext, stringSubstitutor.replace(SAMPLE_COLUMN_SQL_TEMPLATE));
             // Scalar query only return one row

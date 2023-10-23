@@ -613,6 +613,7 @@ public class PhysicalPlanTranslator extends DefaultPlanVisitor<PlanFragment, Pla
                     if (olapScan.getStats().findColumnStatistics(slot).isUnKnown()
                             && !isComplexDataType(slot.getDataType())
                             && !StatisticConstants.isSystemTable(olapTable)) {
+                        LOG.warn("Unknown stats: " + slot.getName());
                         context.addUnknownStatsColumn(olapScanNode, tupleDescriptor.getSlots().get(i).getId());
                     }
                 }
