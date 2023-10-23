@@ -64,7 +64,7 @@ public class StatisticConstants {
 
     public static List<String> SYSTEM_DBS = new ArrayList<>();
 
-    public static int ANALYZE_TASK_RETRY_TIMES = 5;
+    public static int ANALYZE_TASK_RETRY_TIMES = 0;
 
     public static int UNION_ALL_LIMIT = 512;
 

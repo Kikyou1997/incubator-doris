@@ -37,7 +37,7 @@ public class ResultRow {
 
     @Override
     public String toString() {
-        StringJoiner sj = new StringJoiner(",",  "ResultRow:{", "}");
+        StringJoiner sj = new StringJoiner(",", "ResultRow:{", "}");
         for (String val : values) {
             sj.add(val);
         }

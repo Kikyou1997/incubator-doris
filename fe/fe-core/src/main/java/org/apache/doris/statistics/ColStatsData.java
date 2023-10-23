@@ -19,6 +19,9 @@ package org.apache.doris.statistics;
 
 import org.apache.doris.statistics.util.StatisticsUtil;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.StringJoiner;
 
 /**
@@ -39,6 +42,9 @@ import java.util.StringJoiner;
  * 13: update_time
  */
 public class ColStatsData {
+
+    private static final Logger LOG = LogManager.getLogger(ColStatsData.class);
+
     public final StatsId statsId;
     public final long count;
     public final long ndv;
@@ -53,6 +59,7 @@ public class ColStatsData {
     public final String updateTime;
 
     public ColStatsData(ResultRow row) {
+        LOG.warn(String.format("Result row: %s", row.toString()));
         this.statsId = new StatsId(row);
         this.count = (long) Double.parseDouble(row.get(7));
         this.ndv = (long) Double.parseDouble(row.getWithDefault(8, "0"));
