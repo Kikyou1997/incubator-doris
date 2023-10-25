@@ -128,7 +128,7 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
         List<Long> tabletIds = pair.first;
         double scaleFactor = (double) tbl.getRowCount() / (double) pair.second;
         // might happen if row count in fe metadata hasn't been updated yet
-        if (Double.isInfinite(scaleFactor)) {
+        if (Double.isInfinite(scaleFactor) || Double.isNaN(scaleFactor)) {
             scaleFactor = 1;
         }
         String tabletStr = tabletIds.stream()
@@ -261,16 +261,16 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
                             queryState.getErrorMessage()));
                 }
             }
+            StringBuilder batchInsertSQL =
+                    new StringBuilder("INSERT INTO " + StatisticConstants.FULL_QUALIFIED_STATS_TBL_NAME
+                            + " VALUES ");
+            StringJoiner sj = new StringJoiner(",");
             for (List<ColStatsData> colStatsDataList : buf) {
-                StringBuilder batchInsertSQL =
-                        new StringBuilder("INSERT INTO " + StatisticConstants.FULL_QUALIFIED_STATS_TBL_NAME
-                                + " VALUES ");
-                StringJoiner sj = new StringJoiner(",");
                 colStatsDataList.forEach(c -> sj.add(c.toSQL(true)));
-                batchInsertSQL.append(sj.toString());
-                stmtExecutor = new StmtExecutor(r.connectContext, batchInsertSQL.toString());
-                executeWithExceptionOnFail(stmtExecutor);
             }
+            batchInsertSQL.append(sj.toString());
+            stmtExecutor = new StmtExecutor(r.connectContext, batchInsertSQL.toString());
+            executeWithExceptionOnFail(stmtExecutor);
             params.put("type", col.getType().toString());
             StringSubstitutor stringSubstitutor = new StringSubstitutor(params);
             String sql = stringSubstitutor.replace(ANALYZE_COLUMN_SQL_TEMPLATE);

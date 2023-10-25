@@ -2272,7 +2272,7 @@ public class Config extends ConfigBase {
     public static boolean stats_enable_page_cache = false;
 
     @ConfField
-    public static int stats_union_all_limit = 2048;
+    public static int stats_union_all_limit = 1;
 
     @ConfField
     public static boolean ignore_part_ndv = false;

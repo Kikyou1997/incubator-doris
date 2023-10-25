@@ -236,7 +236,7 @@ public class AnalysisManager extends Daemon implements Writable {
     public AnalysisManager() {
         super(TimeUnit.SECONDS.toMillis(StatisticConstants.ANALYZE_MANAGER_INTERVAL_IN_SECS));
         if (!Env.isCheckpointThread()) {
-            this.taskExecutor = new AnalysisTaskExecutor(Config.statistics_simultaneously_running_task_num);
+            this.taskExecutor = new AnalysisTaskExecutor(1);
             this.statisticsCache = new StatisticsCache();
             taskExecutor.start();
         }

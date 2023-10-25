@@ -2624,7 +2624,8 @@ public class StmtExecutor {
                 }
             } catch (Exception e) {
                 LOG.warn("Failed to run internal SQL: {}", originStmt, e);
-                throw new RuntimeException("Failed to execute internal SQL. " + Util.getRootCauseMessage(e), e);
+                throw new RuntimeException(String.format("Failed to execute internal SQL. %s. %s.",
+                        Util.getRootCauseMessage(e), originStmt.originStmt), e);
             }
             RowBatch batch;
             coord = new Coordinator(context, analyzer, planner, context.getStatsErrorEstimator());
