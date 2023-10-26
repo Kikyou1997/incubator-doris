@@ -55,7 +55,7 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
     // TODO Currently, NDV is computed for the full table; in fact,
     //  NDV should only be computed for the relevant partition.
     private static final String ANALYZE_COLUMN_SQL_TEMPLATE = INSERT_COL_STATISTICS
-            + "     (SELECT NDV(`${colName}`) AS ndv "
+            + "     (SELECT 1 AS ndv "
             + "     FROM `${dbName}`.`${tblName}`) t2";
 
     private final String COLLECT_PARTITION_STATS_SQL_TEMPLATE =
@@ -67,7 +67,7 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
                     + "${idxId} AS idx_id, "
                     + "'${colId}' AS col_id, "
                     + "${partId} AS part_id, "
-                    + getNDV()
+                    + "NDV(`${colName}`) AS ndv, "
                     + "COUNT(1) AS ndv, "
                     + "SUM(CASE WHEN `${colName}` IS NULL THEN 1 ELSE 0 END) AS null_count, "
                     + "MIN(`${colName}`) AS min, "
@@ -112,10 +112,6 @@ public class OlapAnalysisTask extends BaseAnalysisTask {
         } else {
             doFull();
         }
-    }
-
-    private String getNDV() {
-        return Config.ignore_part_ndv ? "COUNT(1) AS row_count, " : "NDV(`${colName}`) AS ndv,";
     }
 
     /**
