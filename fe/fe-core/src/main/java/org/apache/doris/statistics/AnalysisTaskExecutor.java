@@ -47,7 +47,7 @@ public class AnalysisTaskExecutor {
             executors = ThreadPoolManager.newDaemonThreadPool(
                     simultaneouslyRunningTaskNum,
                     simultaneouslyRunningTaskNum, 0,
-                    TimeUnit.DAYS, new LinkedBlockingQueue<>(),
+                    TimeUnit.DAYS, new LinkedBlockingQueue<>(StatisticConstants.TASK_QUEUE_CAP),
                     new BlockedPolicy("Analysis Job Executor", Integer.MAX_VALUE),
                     "Analysis Job Executor", true);
             cancelExpiredTask();
